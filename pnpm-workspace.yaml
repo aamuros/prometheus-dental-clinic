@@ -1,0 +1,13 @@
+# pnpm settings for this single application; this is not a monorepo.
+saveExact: true
+strictPeerDependencies: true
+# Cloudflare tooling currently resolves a vulnerable sharp release.
+# Remove after upstream resolves >=0.35.5 and the audit remains clean.
+overrides:
+  sharp: 0.35.5
+allowBuilds:
+  esbuild: true
+  workerd: true
+  sharp: false
+minimumReleaseAgeExclude:
+  - '@cloudflare/workers-types@5.20261008.1'

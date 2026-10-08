@@ -1,0 +1,3 @@
+# No Worker secrets are required for local development.
+# Add service secrets here only when needed, then copy to .dev.vars (ignored).
+# Production secrets must be configured with Wrangler, never committed.
