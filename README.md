@@ -150,6 +150,7 @@ results, cleanup, and driver limitations.
 | `pnpm patients:smoke-data <action>` | Seed, check or clean up synthetic patient workflow fixtures          |
 | `pnpm preview`                      | Rebuild and run the production application locally with workerd      |
 | `pnpm audit --audit-level=high`     | Review dependency vulnerabilities                                    |
+| `pnpm deploy:check`                 | Run checks and package a deployment without uploading                |
 | `pnpm deploy`                       | Run checks and deploy with Wrangler; requires explicit authorization |
 
 Unit tests mock database transport and require no external accounts. They do
@@ -185,9 +186,13 @@ and linting, but remain typechecked.
 ## Environment and deployment
 
 `wrangler.jsonc` identifies the Worker as `prometheus-dental-clinic` and declares
-`DATABASE_URL` in `secrets.required`. This stores only the name, generates its
-binding type, and lets Wrangler validate missing deployed secrets. Local secret
+`DATABASE_URL`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` in `secrets.required`.
+This stores only names, generates binding types, and lets Wrangler validate
+missing deployed secrets. Local secret
 files are not uploaded by deployment.
+
+Follow [the deployment guide](docs/deployment.md) for initial secret provisioning,
+production migrations, deployment commands, verification, and remaining blockers.
 
 Before an explicitly authorized Cloudflare deployment:
 
@@ -198,6 +203,9 @@ Before an explicitly authorized Cloudflare deployment:
   deployment authorization. For initial provisioning, Wrangler also supports
   `--secrets-file` on deployment to upload secrets alongside code. Include only
   runtime secrets in that ignored file, never migration credentials.
+- Configure `BETTER_AUTH_SECRET` with a fresh random value of at least 32 characters
+  and `BETTER_AUTH_URL` with the exact deployed HTTPS origin, without a trailing
+  slash or path. The origin must match the URL staff use to sign in.
 - Review and apply production migrations separately with a protected direct URL.
 - For GitHub Actions, create the `production` environment, restrict it to `main`,
   and add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as environment secrets.

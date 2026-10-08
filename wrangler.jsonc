@@ -4,6 +4,17 @@
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-08",
   "compatibility_flags": ["nodejs_als"],
+  "observability": {
+    "enabled": true,
+    "redact_query_string": true,
+    "logs": {
+      "enabled": true,
+      // Preserve the application's method/status/duration-only logging policy.
+      "invocation_logs": false,
+    },
+    // Automatic traces include request URLs and record identifiers.
+    "traces": { "enabled": false },
+  },
   // Declare names only; values belong in .dev.vars or deployed Worker secrets.
   "secrets": {
     "required": ["DATABASE_URL", "BETTER_AUTH_SECRET", "BETTER_AUTH_URL"],

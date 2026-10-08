@@ -29,6 +29,7 @@
     "test:watch": "vitest",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build",
     "preview": "pnpm build && vite preview --host 127.0.0.1",
+    "deploy:check": "pnpm check && wrangler deploy --dry-run",
     "deploy": "pnpm check && wrangler deploy"
   },
   "dependencies": {
