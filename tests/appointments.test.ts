@@ -271,6 +271,30 @@ describe('Appointment API authorization and scheduling', () => {
       });
     }
   });
+  it('prevents deletion or reassignment of appointments referenced by clinical records', async () => {
+    for (const constraint of [
+      'dental_records_appointment_id_appointments_id_fk',
+      'dental_records_appointment_patient_dentist_fk',
+    ]) {
+      const error = new Error('private clinical details', {
+        cause: {
+          code:
+            constraint === 'dental_records_appointment_patient_dentist_fk'
+              ? '23001'
+              : '23503',
+          constraint,
+        },
+      });
+      vi.mocked(queries.deleteAppointment).mockRejectedValueOnce(error);
+      state.role = 'admin';
+      const response = await request(`/${id}`, 'DELETE');
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({
+        error:
+          'This appointment is linked to a clinical record. Its patient and dentist cannot be changed, and it cannot be deleted.',
+      });
+    }
+  });
   it('returns controlled invalid-reference and missing-record errors', async () => {
     vi.mocked(queries.createAppointment).mockRejectedValueOnce(
       new queries.AppointmentError(400, 'Choose an active patient'),

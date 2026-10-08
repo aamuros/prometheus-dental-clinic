@@ -69,6 +69,14 @@ export function PatientDetailsPage() {
           <dd>{patient.email ?? 'Not provided'}</dd>
         </div>
       </dl>
+      <Link
+        to="/patients/$patientId/dental-records"
+        params={{ patientId: patient.id }}
+        search={{ kind: 'note', page: 1 }}
+        className="block text-sm underline"
+      >
+        Dental records and treatment history
+      </Link>
       {!patient.archivedAt && (
         <div className="flex items-center gap-4 text-sm">
           <Link

@@ -19,6 +19,7 @@
     "auth:verify": "node scripts/verify-auth-runtime.mjs",
     "patients:smoke-data": "tsx scripts/patient-smoke-data.ts",
     "appointments:smoke-data": "tsx scripts/appointment-smoke-data.ts",
+    "dental-records:smoke-data": "tsx scripts/dental-record-smoke-data.ts",
     "cf:types": "wrangler types worker/bindings.d.ts --env-interface WorkerBindings --include-runtime false",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.worker.json && tsc --noEmit -p tsconfig.tools.json",
     "lint": "eslint . --max-warnings 0",

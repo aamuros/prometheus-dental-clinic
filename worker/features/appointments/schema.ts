@@ -5,6 +5,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -37,6 +38,11 @@ export const appointments = pgTable(
       .defaultNow(),
   },
   (table) => [
+    unique('appointments_clinical_reference_unique').on(
+      table.id,
+      table.patientId,
+      table.dentistId,
+    ),
     check('appointments_time_order', sql`${table.endAt} > ${table.startAt}`),
     check(
       'appointments_status_check',

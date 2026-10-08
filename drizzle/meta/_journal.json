@@ -22,6 +22,20 @@
       "when": 1791472417527,
       "tag": "0002_premium_flatman",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791474120862,
+      "tag": "0003_premium_living_mummy",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791474696670,
+      "tag": "0004_violet_beast",
+      "breakpoints": true
     }
   ]
 }

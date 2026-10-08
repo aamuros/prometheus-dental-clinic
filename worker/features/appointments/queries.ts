@@ -221,6 +221,17 @@ export function appointmentDatabaseError(
         409,
         'This dentist already has an appointment during that time.',
       );
+    if ('code' in error && (error.code === '23503' || error.code === '23001'))
+      if (
+        'constraint' in error &&
+        (error.constraint ===
+          'dental_records_appointment_id_appointments_id_fk' ||
+          error.constraint === 'dental_records_appointment_patient_dentist_fk')
+      )
+        return new AppointmentError(
+          409,
+          'This appointment is linked to a clinical record. Its patient and dentist cannot be changed, and it cannot be deleted.',
+        );
     if ('code' in error && error.code === '23503')
       return new AppointmentError(
         400,

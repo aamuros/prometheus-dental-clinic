@@ -6,6 +6,7 @@ import { requireSession, type AuthEnv } from './features/auth/middleware';
 import { authRoutes } from './features/auth/routes';
 import { patientRoutes } from './features/patients/routes';
 import { appointmentRoutes } from './features/appointments/routes';
+import { dentalRecordRoutes } from './features/dental-records/routes';
 
 export const app = new Hono<AuthEnv>();
 
@@ -53,6 +54,7 @@ app.use('/api/*', requireSession);
 app.get('/api/session', (c) => c.json(c.get('staffSession')));
 app.route('/api/patients', patientRoutes);
 app.route('/api/appointments', appointmentRoutes);
+app.route('/api/dental-records', dentalRecordRoutes);
 
 app.notFound((c) => c.json({ error: 'Not found' } satisfies ApiError, 404));
 

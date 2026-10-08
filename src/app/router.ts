@@ -15,6 +15,7 @@ import { Route as patientEditRoute } from '../routes/patient-edit';
 import { Route as appointmentsRoute } from '../routes/appointments';
 import { Route as appointmentNewRoute } from '../routes/appointment-new';
 import { Route as appointmentEditRoute } from '../routes/appointment-edit';
+import { Route as dentalRecordsRoute } from '../routes/dental-records';
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -28,6 +29,7 @@ const routeTree = rootRoute.addChildren([
     appointmentsRoute,
     appointmentNewRoute,
     appointmentEditRoute,
+    dentalRecordsRoute,
   ]),
 ]);
 

@@ -1,6 +1,10 @@
 import { sql } from 'drizzle-orm';
 export { patients } from '../features/patients/schema';
 export { appointments } from '../features/appointments/schema';
+export {
+  dentalRecords,
+  dentalRecordHistory,
+} from '../features/dental-records/schema';
 import {
   bigint,
   boolean,

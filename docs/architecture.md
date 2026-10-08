@@ -47,11 +47,18 @@ adapter; revisit the strategy when a feature requires them. This distinction
 has been verified in workerd, including batch failure recovery.
 
 `worker/db/schema.ts` defines Better Auth's user, account, session, verification,
-and rate-limit tables, and exports the feature-owned patient and appointment
+and rate-limit tables, and exports feature-owned patient, appointment, and clinical
 tables. [Appointment scheduling](appointments.md) uses a database exclusion
 constraint to prevent concurrent dentist bookings and reuses authenticated staff
-accounts with a separate dentist designation. `drizzle.config.ts`
-generates reviewed SQL and snapshots under `drizzle/`; commit those when the
+accounts with a separate dentist designation.
+
+[Dental records](dental-records.md) reuse that designation for clinical-only
+access, store notes and completed treatments in one feature-owned table, and
+preserve full revisions through an atomic PostgreSQL audit trigger. Expected
+versions prevent lost updates, and restrictive foreign keys protect clinical
+history and appointment links.
+
+`drizzle.config.ts` generates reviewed SQL and snapshots under `drizzle/`; commit those when the
 first schema is added. The Node-only migration command uses a direct
 `DATABASE_URL_UNPOOLED` connection from ignored `.env` / `.env.local` or the process environment.
 Wrangler reads the runtime connection from ignored `.dev.vars` locally and an
