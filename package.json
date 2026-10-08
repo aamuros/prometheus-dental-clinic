@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
+    "build:vercel": "vite build --mode vercel",
     "db:generate": "node --env-file-if-exists=.env.local --env-file-if-exists=.env ./node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "node --env-file-if-exists=.env.local --env-file-if-exists=.env ./node_modules/drizzle-kit/bin.cjs migrate",
     "db:verify": "node scripts/verify-database-runtime.mjs",

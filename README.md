@@ -185,6 +185,39 @@ and linting, but remain typechecked.
 
 ## Environment and deployment
 
+### Vercel
+
+Import this repository into Vercel with the repository root as the Root Directory
+and Node.js **24.x**. `vercel.json` selects Vite, installs with the pinned pnpm
+version, runs `pnpm build:vercel`, and serves `dist/client`. The Node.js API
+function in `api/index.ts` reuses the existing Hono application and runs in
+Singapore (`sin1`). API routes take precedence over the SPA fallback, so direct
+navigation to frontend routes works without sending API requests to HTML.
+Static security headers mirror `public/_headers`; Hono retains its API headers.
+
+In Vercel Project Settings → Environment Variables, configure these server-only
+values for each environment you deploy:
+
+- `DATABASE_URL`: the pooled runtime URL for the intended existing Neon database.
+- `BETTER_AUTH_SECRET`: a strong random secret of at least 32 characters.
+- `BETTER_AUTH_URL`: the exact HTTPS origin staff will use, without a trailing
+  slash or path (for example, `https://clinic.example.com`).
+
+Use a stable preview domain and a separate development database for previews;
+set its exact origin as the Preview `BETTER_AUTH_URL`. Better Auth deliberately
+trusts only this configured origin, so arbitrary preview URLs cannot be used
+interchangeably. Configure the production domain before staff sign in, and
+redeploy after changing environment variables. Do not prefix secrets with
+`VITE_` or provide migration credentials to the deployment.
+
+Deploy from the Vercel dashboard after configuring these values. Verify
+`/api/health`, a direct frontend route, and staff login on the deployed origin.
+The deployment does not generate or apply migrations; it requires the existing
+schema and staff accounts. Cloudflare's `pnpm build`, `pnpm dev`, and
+`pnpm deploy` commands and Wrangler configuration remain available unchanged.
+
+### Cloudflare
+
 `wrangler.jsonc` identifies the Worker as `prometheus-dental-clinic` and declares
 `DATABASE_URL`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` in `secrets.required`.
 This stores only names, generates binding types, and lets Wrangler validate

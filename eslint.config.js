@@ -44,6 +44,7 @@ export default defineConfig([
   },
   {
     files: [
+      'api/**/*.ts',
       'worker/**/*.ts',
       'tests/**/*.ts',
       'tests/**/*.tsx',
