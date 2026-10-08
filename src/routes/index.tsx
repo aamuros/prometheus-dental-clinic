@@ -1,10 +1,10 @@
 import { createRoute } from '@tanstack/react-router';
 import { loadHealth } from '../lib/api';
 import { cn } from '../lib/utils';
-import { Route as rootRoute } from './root';
+import { Route as protectedRoute } from './protected';
 
 export const Route = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedRoute,
   path: '/',
   loader: loadHealth,
   component: HomePage,

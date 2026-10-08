@@ -26,7 +26,20 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
   vi.stubGlobal(
     'fetch',
-    vi.fn((path: string) => app.request(path)),
+    vi.fn((path: string) =>
+      path === '/api/session'
+        ? Promise.resolve(
+            Response.json({
+              user: {
+                id: 'staff-id',
+                name: 'Clinic staff',
+                email: 'staff@example.test',
+                role: 'staff',
+              },
+            }),
+          )
+        : app.request(path),
+    ),
   );
 });
 
@@ -50,6 +63,63 @@ describe('React application', () => {
       '/',
     );
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('redirects an anonymous home visit to login before loading application data', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          Response.json({ error: 'Authentication required' }, { status: 401 }),
+        ),
+      ),
+    );
+    renderApp();
+    expect(
+      await screen.findByRole('heading', { name: 'Staff login' }),
+    ).toBeVisible();
+    expect(screen.getByLabelText('Password')).toHaveAttribute(
+      'type',
+      'password',
+    );
+    expect(fetch).not.toHaveBeenCalledWith('/api/health');
+  });
+
+  it('keeps staff out of the administrator page', async () => {
+    renderApp('/staff');
+    expect(
+      await screen.findByRole('heading', { name: 'Application ready' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { name: 'Create staff account' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('allows an administrator to open account creation', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((path: string) =>
+        Promise.resolve(
+          Response.json(
+            path === '/api/appointments/staff'
+              ? { staff: [] }
+              : {
+                  user: {
+                    id: 'admin-id',
+                    name: 'Admin',
+                    email: 'admin@example.test',
+                    role: 'admin',
+                  },
+                },
+          ),
+        ),
+      ),
+    );
+    renderApp('/staff');
+    expect(
+      await screen.findByRole('heading', { name: 'Create staff account' }),
+    ).toBeVisible();
+    expect(screen.getByLabelText('Role')).toHaveValue('staff');
   });
 
   it.each([

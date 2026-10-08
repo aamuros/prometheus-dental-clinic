@@ -1,125 +1,219 @@
-# Web Application Template
+# Prometheus Dental Clinic
 
-A standalone GitHub repository template for internal business applications. React and Hono ship together on Cloudflare Workers. Each generated repository owns its code, dependencies, infrastructure, and deployment; it has no runtime connection to this template.
+A dental clinic management system foundation for staff access, patients,
+appointments, clinical records, and billing. React and the Hono API build and
+ship together as one Cloudflare Worker with Static Assets.
 
-The starting application contains one home page, client routing and error handling, and `GET /api/health`. No database, authentication, or business features are installed.
+Database tooling and staff authentication are installed. Better Auth uses Drizzle
+and Neon for administrator/staff accounts and sessions. [Patient management](docs/patients.md)
+supports patient records, search, editing and archiving. Other clinic workflows remain
+planned in the [development roadmap](docs/roadmap.md). The starter UI requires
+login; `GET /api/health` remains public and does not connect to the database.
 
 ## Stack and requirements
 
 - React 19, Vite, TanStack Router, strict TypeScript
 - Hono on Cloudflare Workers with the official Cloudflare Vite plugin
+- Neon PostgreSQL, Drizzle ORM, and Drizzle Kit
 - Tailwind CSS 4 and shadcn/ui configuration, tokens, and class utilities
 - Vitest, Testing Library, ESLint, Prettier, GitHub Actions
-- Node.js 24.19.0 (see `.node-version`) and pnpm 12.10.1 (see `packageManager`)
+- Node.js 24.19.0 (`.node-version`) and pnpm 12.10.1 (`packageManager`)
 
-Direct dependencies are pinned; commit `pnpm-lock.yaml` when updating them. TypeScript 6 is retained because the pinned TypeScript ESLint tooling does not support TypeScript 7 yet.
+Dependencies are pinned. Include `pnpm-lock.yaml` with dependency changes and
+review required build scripts before allowing them. TypeScript 6 is retained
+until the pinned TypeScript ESLint tooling supports TypeScript 7.
 
-## Create a project
+## Local setup
 
-1. On the template's GitHub page, select **Use this template → Create a new repository**.
-2. Clone your new repository and enter its directory:
-
-   ```sh
-   git clone <your-new-repository-url>
-   cd <your-new-repository>
-   ```
-
-3. Install the Node version in `.node-version`. Install pnpm 12.10.1, or, if Corepack is available, run `corepack enable` to expose the pinned package manager.
-4. Install and start:
+1. Clone this repository and enter `prometheus-dental-clinic`.
+2. Install the Node version in `.node-version` and pnpm 12.10.1. If Corepack is
+   available, `corepack enable` exposes the pinned package manager.
+3. Install dependencies and generate Worker binding types:
 
    ```sh
    pnpm install --frozen-lockfile
+   pnpm cf:types
+   ```
+
+4. Complete the Neon and [staff authentication setup](docs/authentication.md).
+   Login requires local Worker secrets and the authentication migration. Unit
+   tests, the health endpoint and the production build need no live database.
+5. Start the application:
+
+   ```sh
    pnpm dev
    ```
 
-   Open the local URL printed by Vite (normally `http://127.0.0.1:5173`). The home page should show **Application ready** and **API connected**. `/api/health` returns `{"status":"ok"}`. No external credentials or environment files are required.
+   Open the URL printed by Vite (normally `http://127.0.0.1:5173`). The existing
+   home page reports API connectivity, and `/api/health` returns `{"status":"ok"}`.
 
-5. Rename the following metadata before deploying:
+6. Run `pnpm check` before submitting changes.
 
-   | File                  | Update                                     |
-   | --------------------- | ------------------------------------------ |
-   | `package.json`        | `name` and `description`                   |
-   | `wrangler.jsonc`      | `name`, unique for your Cloudflare account |
-   | `index.html`          | page title and description                 |
-   | `src/routes/root.tsx` | visible application name                   |
-   | `README.md`           | project-specific purpose and setup notes   |
+## Neon and migrations
 
-   Run `pnpm install` after changing package metadata and commit any lockfile changes. Run `pnpm format` after renaming to keep metadata and source formatting valid. No renaming script is needed.
+Create or select a Neon project, database, and isolated development branch in
+[Neon Console](https://console.neon.tech). Use synthetic data until the
+[production security checklist](docs/security.md) is implemented. Obtain pooled
+and direct connection strings for the same branch/database from **Connect**.
+Use a runtime role with only necessary data permissions and a separate migration
+role with DDL permissions.
 
-   Configure your new repository's own branch protection, `production` environment, Cloudflare account, secrets, and any required bindings. GitHub template generation copies files, not those repository settings. If you change the default branch from `main`, update both workflows' branch restrictions. Adapt the template's verification report to your application rather than treating its results as evidence for new features.
+Copy the examples only if the local files do not already exist:
 
-6. Run `pnpm check`, then start adding your application's features.
+```sh
+cp -n .dev.vars.example .dev.vars
+cp -n .env.example .env
+```
 
-The original repository has GitHub's **Template repository** setting enabled. For another template repository, enable **Settings → General → Template repository** explicitly; repository files do not control it. Set `main` as the default branch. Recommended branch protection: require pull requests and the **check** CI status, block force pushes and branch deletion, and leave mandatory reviewer counts optional for the small team. Require approvals for sensitive application changes as your team grows.
+Replace the placeholder values locally:
+
+| Variable                | File        | Purpose                                                                    |
+| ----------------------- | ----------- | -------------------------------------------------------------------------- |
+| `DATABASE_URL`          | `.dev.vars` | Pooled runtime connection (`-pooler` hostname), exposed only to the Worker |
+| `DATABASE_URL_UNPOOLED` | `.env`      | Direct connection for Node-only migration tooling                          |
+
+Keep TLS enabled (`sslmode=require`). Neither file is committed. The `db:*`
+scripts use Node's built-in environment-file support; externally supplied
+process variables take precedence. The scripts also read Neon CLI's `.env.local`;
+values in `.env` override `.env.local`. No dotenv dependency is needed. Wrangler
+loads `.dev.vars` for the Worker; the migration URL is not a Worker binding.
+Never use `VITE_*` for either connection string, since those values are public.
+
+`worker/db/client.ts` exports `createDatabase(c.env)` for future server handlers.
+It uses Neon's HTTP driver without a connection pool, Hyperdrive binding, or
+Node compatibility flag. It creates no network request until a query runs.
+Keep database code in `worker/`; never import it into `src/` or `shared/`.
+`db.batch()` supports non-interactive transactions over HTTP. Interactive
+`db.transaction()` callbacks are unsupported by this adapter; a feature needing
+them will require a deliberate connection strategy change.
+
+The Neon CLI context in ignored `.neon` currently links project
+`green-bar-82369299` (`prometheus-dental-clinic`) to the schema-only `development` branch.
+`neon.ts` declares an empty configuration: no additional services or branch
+settings. After CLI authentication, `neon deploy` applies that configuration and
+refreshes ignored `.env.local`; it does not deploy the Cloudflare application or
+run Drizzle migrations. When `.dev.vars` is absent, Wrangler can load the runtime
+`DATABASE_URL` from `.env.local` instead. Check the target branch before database
+writes: the pulled URLs currently point to `development`. Keep migration tests
+on disposable children of development and never verify against production.
+
+`worker/db/schema.ts` defines the Better Auth tables. For schema changes:
+
+```sh
+pnpm db:generate
+# Review the generated SQL and snapshots in drizzle/ before applying them.
+pnpm db:migrate
+```
+
+Generation works offline without credentials. Migration requires a configured
+`DATABASE_URL_UNPOOLED` and network access. Drizzle Kit uses the Neon WebSocket
+driver for migration transactions in Node; Worker queries use HTTP. Commit
+reviewed SQL and metadata under `drizzle/` alongside each schema change. Test
+migrations on an isolated Neon branch before applying them to production.
+Migrations are separate from Worker requests, `pnpm check`, and deployment;
+no command automatically migrates production.
+
+To repeat the real Hono/Drizzle check in the local Workers runtime:
+
+```sh
+pnpm build
+pnpm db:verify
+```
+
+This requires development credentials, network access, and an available localhost
+port `8789`. The harness refuses a production context or conflicting credential
+overrides, verifies the actual Hono binding before SQL, runs `SELECT 1` and HTTP
+transaction checks, then stops workerd. Its entry point lives only in
+`tests/runtime/`; no verification endpoint is added to the application. The
+ordinary `pnpm check` remains independent of live database access.
+See the [database verification record](docs/database-verification.md) for migration
+results, cleanup, and driver limitations.
 
 ## Commands
 
-| Command                         | Purpose                                                         |
-| ------------------------------- | --------------------------------------------------------------- |
-| `pnpm dev`                      | React development server and local Workers runtime              |
-| `pnpm build`                    | Production client assets and Worker bundle                      |
-| `pnpm typecheck`                | Check frontend, Worker, and tooling separately                  |
-| `pnpm lint`                     | ESLint, including frontend/Worker import boundaries             |
-| `pnpm format:check`             | Verify formatting                                               |
-| `pnpm format`                   | Apply formatting                                                |
-| `pnpm test`                     | Run frontend smoke tests and Hono API tests once                |
-| `pnpm test:watch`               | Watch unit tests                                                |
-| `pnpm check`                    | Typecheck, lint, formatting, tests, and production build        |
-| `pnpm preview`                  | Rebuild and run the production application locally with workerd |
-| `pnpm audit --audit-level=high` | Review dependency vulnerabilities                               |
-| `pnpm deploy`                   | Run all checks, build, and deploy with Wrangler                 |
+| Command                             | Purpose                                                              |
+| ----------------------------------- | -------------------------------------------------------------------- |
+| `pnpm dev`                          | React development server and local Workers runtime                   |
+| `pnpm build`                        | Production client assets and Worker bundle                           |
+| `pnpm typecheck`                    | Check frontend, Worker, tooling, and database configuration          |
+| `pnpm lint`                         | ESLint, including frontend/Worker import boundaries                  |
+| `pnpm format:check`                 | Verify formatting                                                    |
+| `pnpm format`                       | Apply formatting                                                     |
+| `pnpm test`                         | Credential-free frontend, API, and database-client unit tests        |
+| `pnpm check`                        | Typecheck, lint, formatting, tests, and production build             |
+| `pnpm cf:types`                     | Regenerate Worker bindings from Wrangler configuration               |
+| `pnpm db:generate`                  | Generate SQL migrations from the Drizzle schema                      |
+| `pnpm db:migrate`                   | Apply reviewed migrations to the configured direct database URL      |
+| `pnpm db:verify`                    | Verify development credentials and SQL in local workerd              |
+| `pnpm auth:bootstrap`               | Create the first administrator on an empty development database      |
+| `pnpm auth:verify`                  | Verify authentication against development in local workerd           |
+| `pnpm patients:smoke-data <action>` | Seed, check or clean up synthetic patient workflow fixtures          |
+| `pnpm preview`                      | Rebuild and run the production application locally with workerd      |
+| `pnpm audit --audit-level=high`     | Review dependency vulnerabilities                                    |
+| `pnpm deploy`                       | Run checks and deploy with Wrangler; requires explicit authorization |
 
-`pnpm preview` needs no Cloudflare credentials. It is a local preview, not a public deployment. Unit tests use Node and jsdom; they do not start a browser or require external services.
+Unit tests mock database transport and require no external accounts. They do
+not establish live database connectivity or verify the Workers runtime. Follow
+[the runtime/browser smoke procedure](docs/verification.md#reproducible-manual-browser-smoke-test)
+when validating a release or an integration in workerd.
 
 ## Structure
 
 ```text
-src/
-  app/            React entry point and router assembly
-  routes/         Root layout and home route
-  components/     Not-found and error views
-  lib/            Browser API access and UI class utility
-  styles/         Tailwind and shared design tokens
-shared/api.ts     Runtime-independent response contracts
+src/                   Browser entry point, routes, components, styles, helpers
+shared/api.ts          Runtime-independent API contracts
 worker/
-  app.ts          Hono middleware and routes
-  index.ts        Cloudflare Worker entry point
-public/_headers   Production static-asset security headers
-tests/            Frontend smoke tests and API tests
-docs/             Architecture, conventions, and verification
-.github/workflows/ CI and manually triggered deployment
+  app.ts               Hono middleware and routes
+  index.ts             Typed Cloudflare Worker entry point
+  bindings.d.ts        Generated Worker binding declarations
+  db/client.ts         Request-scoped Neon HTTP / Drizzle database factory
+  db/schema.ts         Drizzle table definitions (currently empty)
+drizzle.config.ts      Node-only migration configuration
+neon.ts                Neon service configuration (currently empty)
+drizzle/               Migration journal; SQL and snapshots added with tables
+tests/                 Frontend, API, and database-client unit tests
+docs/                  Architecture, conventions, roadmap, security, verification
+.github/workflows/     CI and manually triggered deployment
 ```
 
-Create `src/features/<feature>/` and `worker/features/<feature>/` when a business feature needs them. Empty feature directories and unused infrastructure configuration are deliberately omitted.
+Add business features in `src/features/<feature>/` and
+`worker/features/<feature>/` as needed. Keep routes focused on composition and
+avoid speculative service/repository layers. Regenerate `worker/bindings.d.ts`
+after binding changes; generated declarations are excluded from formatting
+and linting, but remain typechecked.
 
-## Environment and security
+## Environment and deployment
 
-The base needs no environment variables. `.env.example` and `.dev.vars.example` explain the boundary without adding unused values:
+`wrangler.jsonc` identifies the Worker as `prometheus-dental-clinic` and declares
+`DATABASE_URL` in `secrets.required`. This stores only the name, generates its
+binding type, and lets Wrangler validate missing deployed secrets. Local secret
+files are not uploaded by deployment.
 
-- `VITE_*` variables are public and embedded in the browser bundle. Never use them for secrets.
-- Local Worker secrets belong in `.dev.vars`, which Git ignores. Read them through typed Worker bindings, not browser imports.
-- Use `pnpm exec wrangler secret put <NAME>` for production secrets. Configure non-secret bindings in `wrangler.jsonc` only when needed. Add matching binding types when you add infrastructure.
-- CI deployment credentials belong in GitHub environment secrets, not repository files.
+Before an explicitly authorized Cloudflare deployment:
 
-API responses and static assets receive separate security headers because Cloudflare serves assets without invoking Hono. The production CSP allows same-origin resources and blocks inline scripts/styles; evaluate and adjust it deliberately when integrating components that use inline styles or external services. Vite development uses its development headers so React refresh and CSS updates can work.
+- Configure the target Cloudflare account and ensure the Worker name is available.
+- Configure an encrypted `DATABASE_URL` Worker secret for the production Neon
+  branch. For an existing Worker, `pnpm exec wrangler secret put DATABASE_URL`
+  prompts for the value and deploys a new version immediately; run it only with
+  deployment authorization. For initial provisioning, Wrangler also supports
+  `--secrets-file` on deployment to upload secrets alongside code. Include only
+  runtime secrets in that ignored file, never migration credentials.
+- Review and apply production migrations separately with a protected direct URL.
+- For GitHub Actions, create the `production` environment, restrict it to `main`,
+  and add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as environment secrets.
+  Scope the token to the target account and necessary Worker permissions.
+  `DATABASE_URL` belongs to the deployed Worker; CI does not need it for checks.
+- Protect `main` with pull requests and the **check** status. The **Deploy**
+  workflow is manually triggered from `main`; pushes do not deploy automatically.
 
-**This unauthenticated starter must not store protected client information.** Before handling such information, implement authentication, server-side authorization, input validation, suitable redacted logging, backup/restore procedures, and application-specific security validation. Transport headers alone do not provide those safeguards.
+After authorization, use `pnpm exec wrangler login` if needed and `pnpm deploy`,
+or the protected **Deploy** workflow. The Cloudflare Vite plugin generates one
+combined deployment; do not deploy `dist/client` separately. Verify client/API
+routing, security headers, and database access after adding database-backed routes.
 
-Use the [production security checklist](docs/security.md) before processing private business information. Coding agents should follow [AGENTS.md](AGENTS.md); dependency maintenance is described in [conventions](docs/conventions.md).
-
-## Deploy to Cloudflare Workers
-
-Cloud deployment is separate from local setup and requires your own Cloudflare account. Update the Worker name first.
-
-For an authorized manual deployment:
-
-```sh
-pnpm exec wrangler login
-pnpm deploy
-```
-
-The Cloudflare Vite plugin writes client assets and a Worker configuration during the build; Wrangler uses its generated deployment configuration. Do not manually deploy only `dist/client` or add a second frontend deployment. Verify `/`, an unknown client route, `/api/health`, and an unknown API route at the printed deployment URL.
-
-For GitHub Actions, create a **production** environment, select **Selected branches and tags**, and allow the `main` branch only, with any desired reviewer protection. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as environment secrets. Scope the token to the target account and the Worker deployment permissions. Then explicitly run the **Deploy** workflow from `main`. Its job also rejects other branches, audits dependencies, and runs `pnpm deploy`, including every mandatory check, before uploading. CI runs on pull requests and pushes to `main` without deployment secrets; pushes do not deploy automatically. The workflow guard complements branch protection and environment restrictions; configure both before production use.
-
-See [architecture](docs/architecture.md), [conventions](docs/conventions.md), and the [verification report](docs/verification.md).
+Before storing patient information, complete authentication, server-side
+permissions, validation, safe logging, retention, and tested backup restoration.
+See [AGENTS.md](AGENTS.md), [architecture](docs/architecture.md),
+[conventions](docs/conventions.md), and the [roadmap](docs/roadmap.md).
+The template stabilization results in [verification](docs/verification.md) are
+historical evidence, not verification of the clinic's database or future features.

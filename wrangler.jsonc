@@ -1,8 +1,13 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "web-application",
+  "name": "prometheus-dental-clinic",
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-08",
+  "compatibility_flags": ["nodejs_als"],
+  // Declare names only; values belong in .dev.vars or deployed Worker secrets.
+  "secrets": {
+    "required": ["DATABASE_URL", "BETTER_AUTH_SECRET", "BETTER_AUTH_URL"],
+  },
   "assets": {
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api", "/api/*"],

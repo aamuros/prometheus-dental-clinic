@@ -2,6 +2,21 @@ import { HTTPException } from 'hono/http-exception';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { app } from '../worker/app';
 
+vi.mock('../worker/features/auth/auth', () => ({
+  createAuth: () => ({
+    api: {
+      getSession: async () => ({
+        user: {
+          id: 'test',
+          name: 'Staff',
+          email: 'staff@example.test',
+          role: 'staff',
+        },
+      }),
+    },
+  }),
+}));
+
 // These routes exist only in the test process, before Hono builds its matcher.
 app.get('/api/test-error', () => {
   throw new Error('private database connection details');

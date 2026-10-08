@@ -12,3 +12,4 @@ coverage/
 .DS_Store
 output/
 .playwright-cli/
+.neon

@@ -6,3 +6,5 @@ pnpm-lock.yaml
 output/
 .playwright-cli/
 public/_headers
+worker/bindings.d.ts
+.agents/skills/

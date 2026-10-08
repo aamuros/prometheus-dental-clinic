@@ -11,6 +11,8 @@ export default defineConfig([
     '.wrangler/**',
     'output/**',
     '.playwright-cli/**',
+    'worker/bindings.d.ts',
+    '.agents/skills/**',
   ]),
   {
     files: ['**/*.{ts,tsx}'],
@@ -41,7 +43,12 @@ export default defineConfig([
     },
   },
   {
-    files: ['worker/**/*.ts', 'tests/**/*.ts', 'tests/**/*.tsx'],
+    files: [
+      'worker/**/*.ts',
+      'tests/**/*.ts',
+      'tests/**/*.tsx',
+      'scripts/**/*.ts',
+    ],
     rules: { 'no-restricted-imports': 'off' },
   },
 ]);

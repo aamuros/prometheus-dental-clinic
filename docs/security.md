@@ -1,10 +1,12 @@
 # Production security checklist
 
-This starter is unauthenticated and has no database. Its headers and safe error
-responses are useful defaults, but each generated application must implement
-and verify these safeguards before processing private business information.
-Choose controls for the application's data and access model; the template does
-not install security services or frameworks.
+Prometheus Dental Clinic has database tooling, staff authentication, and
+server-enforced admin/staff roles. Its headers and safe error responses are useful defaults, but the
+application must implement and verify these safeguards before processing private
+patient or clinic information. Choose controls for the clinic's data and access
+model. See [authentication](authentication.md) for the verified development
+flows. The full production checklist remains open, including account removal,
+session revocation by administrators, and deployment access controls.
 
 - [ ] **Authentication:** identify permitted users, protect entry points, and
       provide account removal and session revocation. Use a maintained provider

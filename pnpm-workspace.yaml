@@ -11,3 +11,4 @@ allowBuilds:
   sharp: false
 minimumReleaseAgeExclude:
   - '@cloudflare/workers-types@5.20261008.1'
+  - drizzle-orm@0.45.4
