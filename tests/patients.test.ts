@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { app } from '../worker/app';
+import { clinicDate } from '../shared/appointments';
 import * as queries from '../worker/features/patients/queries';
 import type { patients } from '../worker/features/patients/schema';
 import {
@@ -254,6 +255,18 @@ describe('Patient API', () => {
     expect((await request(`/${id}`, 'PUT', body)).status).toBe(400);
     expect(queries.createPatient).not.toHaveBeenCalled();
     expect(queries.updatePatient).not.toHaveBeenCalled();
+  });
+
+  it('uses the Manila calendar date to validate birth dates', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-10-10T18:00:00.000Z'));
+      expect(clinicDate()).toBe('2026-10-11');
+      expect(parsePatient({ ...input, birthDate: '2026-10-11' })).not.toBeNull();
+      expect(parsePatient({ ...input, birthDate: '2026-10-12' })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('accepts a leap-day birth date and omitted optional email', async () => {
