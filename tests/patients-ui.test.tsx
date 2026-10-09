@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAppRouter } from '../src/app/router';
 import type { Patient } from '../shared/patients';
+import { clinicDate } from '../shared/appointments';
 
 const id = '36f38e10-ae56-4a44-9fae-5742baceb003';
 const patient: Patient = {
@@ -83,6 +84,7 @@ describe('Patient UI', () => {
     expect(
       await screen.findByRole('heading', { name: 'Add patient' }),
     ).toBeVisible();
+    expect(screen.getByLabelText('Birth date')).toHaveAttribute('max', clinicDate());
     fireEvent.change(screen.getByLabelText('Name'), {
       target: { value: patient.name },
     });
