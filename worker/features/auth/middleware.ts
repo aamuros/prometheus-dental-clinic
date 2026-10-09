@@ -1,6 +1,6 @@
 import { createMiddleware } from 'hono/factory';
-import type { StaffSession } from '../../../shared/auth';
-import { createAuth } from './auth';
+import type { StaffSession } from '../../../shared/auth.js';
+import { createAuth } from './auth.js';
 
 export type AuthEnv = {
   Bindings: WorkerBindings;

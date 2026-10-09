@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import { createDatabase } from '../../db/client';
-import type { AuthEnv } from '../auth/middleware';
-import { isPatientId } from '../patients/validation';
-import { listDentists } from '../appointments/queries';
+import { createDatabase } from '../../db/client.js';
+import type { AuthEnv } from '../auth/middleware.js';
+import { isPatientId } from '../patients/validation.js';
+import { listDentists } from '../appointments/queries.js';
 import {
   createDentalRecord,
   dentalRecordDatabaseError,
@@ -12,8 +12,8 @@ import {
   listDentalRecords,
   recordAppointments,
   updateDentalRecord,
-} from './queries';
-import { parseDentalRecord, parseRecordPage } from './validation';
+} from './queries.js';
+import { parseDentalRecord, parseRecordPage } from './validation.js';
 
 export const dentalRecordRoutes = new Hono<AuthEnv>();
 // Check the current designation in the database on every request, including

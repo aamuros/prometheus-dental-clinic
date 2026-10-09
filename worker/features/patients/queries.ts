@@ -1,7 +1,7 @@
 import { and, asc, eq, ilike, isNotNull, isNull, or } from 'drizzle-orm';
-import type { PatientInput, PatientSearch } from '../../../shared/patients';
-import type { createDatabase } from '../../db/client';
-import { patients } from './schema';
+import type { PatientInput, PatientSearch } from '../../../shared/patients.js';
+import type { createDatabase } from '../../db/client.js';
+import { patients } from './schema.js';
 
 type Database = ReturnType<typeof createDatabase>;
 const pageSize = 50;

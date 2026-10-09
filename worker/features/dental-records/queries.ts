@@ -11,13 +11,13 @@ import {
 import type {
   DentalRecordInput,
   DentalRecordKind,
-} from '../../../shared/dental-records';
-import type { createDatabase } from '../../db/client';
-import { user } from '../../db/schema';
+} from '../../../shared/dental-records.js';
+import type { createDatabase } from '../../db/client.js';
+import { user } from '../../db/schema.js';
 import { alias } from 'drizzle-orm/pg-core';
-import { patients } from '../patients/schema';
-import { appointments } from '../appointments/schema';
-import { dentalRecords, dentalRecordHistory } from './schema';
+import { patients } from '../patients/schema.js';
+import { appointments } from '../appointments/schema.js';
+import { dentalRecords, dentalRecordHistory } from './schema.js';
 
 type Database = ReturnType<typeof createDatabase>;
 export class DentalRecordError extends Error {

@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023"],
+    "types": ["node", "@cloudflare/workers-types"],
+    "rootDir": "."
+  },
+  "include": ["api", "worker/bindings.d.ts"]
+}

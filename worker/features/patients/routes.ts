@@ -1,15 +1,15 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import { createDatabase } from '../../db/client';
-import { requireAdmin, type AuthEnv } from '../auth/middleware';
+import { createDatabase } from '../../db/client.js';
+import { requireAdmin, type AuthEnv } from '../auth/middleware.js';
 import {
   archivePatient,
   createPatient,
   findPatient,
   listPatients,
   updatePatient,
-} from './queries';
-import { isPatientId, parsePatient, parsePatientSearch } from './validation';
+} from './queries.js';
+import { isPatientId, parsePatient, parsePatientSearch } from './validation.js';
 
 // Mounted after the application's requireSession middleware.
 export const patientRoutes = new Hono<AuthEnv>();

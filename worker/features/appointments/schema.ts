@@ -9,9 +9,9 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
-import type { AppointmentStatus } from '../../../shared/appointments';
-import { user } from '../../db/schema';
-import { patients } from '../patients/schema';
+import type { AppointmentStatus } from '../../../shared/appointments.js';
+import { user } from '../../db/schema.js';
+import { patients } from '../patients/schema.js';
 
 export const appointments = pgTable(
   'appointments',

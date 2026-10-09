@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "build:vercel": "vite build --mode vercel",
+    "build:vercel": "tsc --noEmit -p tsconfig.vercel.json && vite build --mode vercel",
     "db:generate": "node --env-file-if-exists=.env.local --env-file-if-exists=.env ./node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "node --env-file-if-exists=.env.local --env-file-if-exists=.env ./node_modules/drizzle-kit/bin.cjs migrate",
     "db:verify": "node scripts/verify-database-runtime.mjs",
@@ -22,7 +22,7 @@
     "appointments:smoke-data": "tsx scripts/appointment-smoke-data.ts",
     "dental-records:smoke-data": "tsx scripts/dental-record-smoke-data.ts",
     "cf:types": "wrangler types worker/bindings.d.ts --env-interface WorkerBindings --include-runtime false",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.worker.json && tsc --noEmit -p tsconfig.tools.json",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.worker.json && tsc --noEmit -p tsconfig.tools.json && tsc --noEmit -p tsconfig.vercel.json",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

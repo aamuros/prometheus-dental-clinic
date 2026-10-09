@@ -1,10 +1,10 @@
-import { clinicDate, isClinicDate } from '../../../shared/appointments';
+import { clinicDate, isClinicDate } from '../../../shared/appointments.js';
 import {
   isFdiTooth,
   type DentalRecordInput,
-} from '../../../shared/dental-records';
-import { isStaffId } from '../appointments/validation';
-import { isPatientId } from '../patients/validation';
+} from '../../../shared/dental-records.js';
+import { isStaffId } from '../appointments/validation.js';
+import { isPatientId } from '../patients/validation.js';
 
 function text(value: unknown, max: number): string | null | false {
   if (value === null || value === undefined) return null;

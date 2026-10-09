@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import { createDatabase } from '../../db/client';
-import { requireAdmin, type AuthEnv } from '../auth/middleware';
-import { isPatientId } from '../patients/validation';
+import { createDatabase } from '../../db/client.js';
+import { requireAdmin, type AuthEnv } from '../auth/middleware.js';
+import { isPatientId } from '../patients/validation.js';
 import {
   appointmentDatabaseError,
   cancelAppointment,
@@ -14,12 +14,12 @@ import {
   listDentists,
   listSchedulingStaff,
   updateAppointment,
-} from './queries';
+} from './queries.js';
 import {
   isStaffId,
   parseAppointment,
   parseAppointmentSearch,
-} from './validation';
+} from './validation.js';
 
 // Mounted after requireSession: admin/staff may manage clinic-wide appointments;
 // permanent deletion is restricted to admin, cancellation preserves history.

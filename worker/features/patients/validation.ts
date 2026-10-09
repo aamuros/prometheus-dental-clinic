@@ -1,5 +1,5 @@
-import type { PatientInput, PatientSearch } from '../../../shared/patients';
-import { clinicDate } from '../../../shared/appointments';
+import type { PatientInput, PatientSearch } from '../../../shared/patients.js';
+import { clinicDate } from '../../../shared/appointments.js';
 
 function hasControlCharacters(value: string) {
   for (let index = 0; index < value.length; index++) {

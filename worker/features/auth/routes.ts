@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import { createAuth } from './auth';
-import { requireAdmin, requireSession, type AuthEnv } from './middleware';
+import { createAuth } from './auth.js';
+import { requireAdmin, requireSession, type AuthEnv } from './middleware.js';
 
 export const authRoutes = new Hono<AuthEnv>();
 authRoutes.use('*', bodyLimit({ maxSize: 8192 }));

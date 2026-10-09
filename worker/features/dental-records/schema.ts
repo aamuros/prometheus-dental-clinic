@@ -16,10 +16,10 @@ import {
 import type {
   DentalRecordInput,
   DentalRecordKind,
-} from '../../../shared/dental-records';
-import { user } from '../../db/schema';
-import { patients } from '../patients/schema';
-import { appointments } from '../appointments/schema';
+} from '../../../shared/dental-records.js';
+import { user } from '../../db/schema.js';
+import { patients } from '../patients/schema.js';
+import { appointments } from '../appointments/schema.js';
 
 // Notes and completed treatments share one clinical record contract. Treatment
 // history is the date-ordered treatment projection; revisions preserve both.

@@ -3,13 +3,13 @@ import {
   isClinicDate,
   addClinicDays,
   clinicDate,
-} from '../../../shared/appointments';
+} from '../../../shared/appointments.js';
 import type {
   AppointmentInput,
   AppointmentSearch,
   AppointmentStatus,
-} from '../../../shared/appointments';
-import { isPatientId } from '../patients/validation';
+} from '../../../shared/appointments.js';
+import { isPatientId } from '../patients/validation.js';
 
 export function isStaffId(value: unknown): value is string {
   return typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);

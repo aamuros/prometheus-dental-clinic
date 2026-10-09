@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import * as schema from './schema';
+import * as schema from './schema.js';
 
 // Create inside a request using c.env; never read secrets from browser code.
 export function createDatabase(env: Pick<WorkerBindings, 'DATABASE_URL'>) {

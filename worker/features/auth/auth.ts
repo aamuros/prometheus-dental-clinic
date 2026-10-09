@@ -3,8 +3,8 @@ import type { BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin } from 'better-auth/plugins/admin';
 import { adminAc, defaultAc } from 'better-auth/plugins/admin/access';
-import { createDatabase } from '../../db/client';
-import * as schema from '../../db/schema';
+import { createDatabase } from '../../db/client.js';
+import * as schema from '../../db/schema.js';
 
 // Shared by credential-free tests; the Worker always supplies Drizzle.
 export function authOptions(

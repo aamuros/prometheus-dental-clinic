@@ -13,12 +13,12 @@ import {
 import type {
   AppointmentInput,
   AppointmentSearch,
-} from '../../../shared/appointments';
-import { clinicDayStart } from '../../../shared/appointments';
-import type { createDatabase } from '../../db/client';
-import { user } from '../../db/schema';
-import { patients } from '../patients/schema';
-import { appointments } from './schema';
+} from '../../../shared/appointments.js';
+import { clinicDayStart } from '../../../shared/appointments.js';
+import type { createDatabase } from '../../db/client.js';
+import { user } from '../../db/schema.js';
+import { patients } from '../patients/schema.js';
+import { appointments } from './schema.js';
 
 type Database = ReturnType<typeof createDatabase>;
 export class AppointmentError extends Error {

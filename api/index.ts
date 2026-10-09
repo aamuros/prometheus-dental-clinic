@@ -1,4 +1,4 @@
-import { app } from '../worker/app';
+import { app } from '../worker/app.js';
 
 // Vercel supplies Node.js environment variables instead of Worker bindings.
 export default {

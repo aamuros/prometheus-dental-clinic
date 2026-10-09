@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { secureHeaders } from 'hono/secure-headers';
-import type { ApiError, HealthResponse } from '../shared/api';
-import { requireSession, type AuthEnv } from './features/auth/middleware';
-import { authRoutes } from './features/auth/routes';
-import { patientRoutes } from './features/patients/routes';
-import { appointmentRoutes } from './features/appointments/routes';
-import { dentalRecordRoutes } from './features/dental-records/routes';
+import type { ApiError, HealthResponse } from '../shared/api.js';
+import { requireSession, type AuthEnv } from './features/auth/middleware.js';
+import { authRoutes } from './features/auth/routes.js';
+import { patientRoutes } from './features/patients/routes.js';
+import { appointmentRoutes } from './features/appointments/routes.js';
+import { dentalRecordRoutes } from './features/dental-records/routes.js';
 
 export const app = new Hono<AuthEnv>();
 
