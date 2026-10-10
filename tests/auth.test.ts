@@ -152,6 +152,60 @@ describe('Clinic authentication and authorization', () => {
     expect((await request('/api/session', undefined, cookie)).status).toBe(401);
   });
 
+  it.each(['admin', 'staff'] as const)(
+    'denies an existing %s session immediately after an account ban',
+    async (role) => {
+      const { cookie } = await login(role);
+      const user = store.user[0];
+      if (!user) throw new Error('Missing fixture user');
+      user.banned = true;
+      const id = '36f38e10-ae56-4a44-9fae-5742baceb003';
+      for (const path of [
+        '/api/session',
+        '/api/patients',
+        '/api/appointments',
+        '/api/appointments/staff',
+        '/api/dental-records',
+        `/api/dental-records/options?patientId=${id}`,
+      ]) {
+        const response = await request(path, undefined, cookie);
+        expect(response.status).toBe(403);
+        expect(await response.json()).toEqual({ error: 'Access denied' });
+      }
+      for (const path of [
+        '/api/patients',
+        `/api/patients/${id}/archive`,
+        '/api/appointments',
+        `/api/appointments/${id}/cancel`,
+        '/api/dental-records',
+      ]) {
+        expect((await request(path, {}, cookie)).status).toBe(403);
+      }
+      expect(
+        (
+          await request(
+            '/api/auth/admin/create-user',
+            {
+              name: 'Blocked creation',
+              email: 'blocked@example.test',
+              password,
+              role: 'staff',
+            },
+            cookie,
+          )
+        ).status,
+      ).toBe(403);
+      expect(store.user).toHaveLength(1);
+      // A banned account must still be able to clear its cookie and session.
+      expect((await request('/api/auth/sign-out', {}, cookie)).status).toBe(
+        200,
+      );
+      expect((await request('/api/session', undefined, cookie)).status).toBe(
+        401,
+      );
+    },
+  );
+
   it('restricts account creation to admins and validates roles and password length', async () => {
     const body = {
       name: 'New staff',
@@ -205,6 +259,28 @@ describe('Clinic authentication and authorization', () => {
         })
       ).status,
     ).toBe(200);
+  });
+
+  it('lets administrators create a designated dentist without granting administrator access', async () => {
+    const { cookie } = await login('admin');
+    const response = await request(
+      '/api/auth/admin/create-user',
+      {
+        name: 'Synthetic dentist',
+        email: 'dentist@example.test',
+        password,
+        role: 'staff',
+        data: { isDentist: true },
+      },
+      cookie,
+    );
+    expect(response.status).toBe(200);
+    expect(
+      store.user.find((user) => user.email === 'dentist@example.test'),
+    ).toMatchObject({
+      role: 'staff',
+      isDentist: true,
+    });
   });
 
   it('blocks public signup and unused account/role endpoints', async () => {

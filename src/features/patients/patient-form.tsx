@@ -1,6 +1,7 @@
 import { useState, type SubmitEvent } from 'react';
 import { Link, useRouter } from '@tanstack/react-router';
 import type { Patient } from '../../../shared/patients';
+import { clinicDate } from '../../../shared/appointments';
 import { PatientApiError, savePatient } from './api';
 
 export function PatientForm({ patient }: { patient?: Patient }) {
@@ -75,7 +76,7 @@ export function PatientForm({ patient }: { patient?: Patient }) {
             type="date"
             required
             min="0001-01-01"
-            max={new Date().toISOString().slice(0, 10)}
+            max={clinicDate()}
             defaultValue={patient?.birthDate ?? ''}
           />
         </label>

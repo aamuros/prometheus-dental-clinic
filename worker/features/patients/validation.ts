@@ -1,4 +1,5 @@
 import type { PatientInput, PatientSearch } from '../../../shared/patients';
+import { clinicDate } from '../../../shared/appointments';
 
 function hasControlCharacters(value: string) {
   for (let index = 0; index < value.length; index++) {
@@ -39,7 +40,7 @@ export function parsePatient(body: unknown): PatientInput | null {
   if (
     !Number.isFinite(date.getTime()) ||
     date.toISOString().slice(0, 10) !== birthDate ||
-    birthDate > new Date().toISOString().slice(0, 10)
+    birthDate > clinicDate()
   )
     return null;
   if (contactNumber.length > 30 || !/^\+?[\d ()-]+$/.test(contactNumber))

@@ -250,6 +250,56 @@ describe('Dental records UI', () => {
       'Unsaved correction',
     );
   });
+  it('clears clinical content and unsaved input when clinical access is revoked', async () => {
+    renderPage();
+    fireEvent.click(
+      await screen.findByRole('button', { name: /View record details/ }),
+    );
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Edit clinical record' }),
+    );
+    fireEvent.change(await screen.findByLabelText('Clinical notes'), {
+      target: { value: 'Unsaved private correction' },
+    });
+    clinical = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Save revision' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Clinical dentist access',
+    );
+    expect(screen.queryByLabelText('Clinical notes')).not.toBeInTheDocument();
+    expect(screen.queryByText('Original note')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Unsaved private correction'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('retains an older appointment link when correcting archived clinical history', async () => {
+    archived = true;
+    const appointmentId = '76f38e10-ae56-4a44-9fae-5742baceb003';
+    records = [{ ...original, appointmentId }];
+    renderPage();
+    fireEvent.click(
+      await screen.findByRole('button', { name: /View record details/ }),
+    );
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Edit clinical record' }),
+    );
+    fireEvent.change(await screen.findByLabelText('Clinical notes'), {
+      target: { value: 'Archived correction' },
+    });
+    expect(screen.getByLabelText('Recent appointment (optional)')).toHaveValue(
+      appointmentId,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Save revision' }));
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]).toMatchObject({
+      method: 'PUT',
+      body: { appointmentId, clinicalNotes: 'Archived correction', version: 1 },
+    });
+    expect(
+      await screen.findByText(/Version 2 · Synthetic dentist/),
+    ).toBeVisible();
+  });
   it('allows viewing archived history while hiding new-entry controls and all deletion controls', async () => {
     archived = true;
     renderPage();

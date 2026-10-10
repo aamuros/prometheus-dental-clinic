@@ -15,7 +15,8 @@ export const requireSession = createMiddleware<AuthEnv>(async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
   if (!session) return c.json({ error: 'Authentication required' }, 401);
   const role = session.user.role;
-  if (role !== 'admin' && role !== 'staff')
+  // Better Auth checks bans on login, so also deny sessions issued before a ban.
+  if (session.user.banned || (role !== 'admin' && role !== 'staff'))
     return c.json({ error: 'Access denied' }, 403);
   c.set('auth', auth);
   c.set('staffSession', {

@@ -269,6 +269,21 @@ describe('Patient API', () => {
     });
   });
 
+  it('uses the current Manila date for birth dates across UTC midnight', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-10-08T16:30:00Z'));
+      expect(
+        parsePatient({ ...input, birthDate: '2026-10-09' }),
+      ).not.toBeNull();
+      expect(parsePatient({ ...input, birthDate: '2026-10-10' })).toBeNull();
+      vi.setSystemTime(new Date('2026-10-08T15:59:59Z'));
+      expect(parsePatient({ ...input, birthDate: '2026-10-09' })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('rejects malformed JSON and oversized bodies', async () => {
     for (const [body, status] of [
       ['{broken', 400],

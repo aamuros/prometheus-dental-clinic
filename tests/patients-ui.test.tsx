@@ -61,6 +61,20 @@ beforeEach(() => {
 });
 
 describe('Patient UI', () => {
+  it('allows today in Manila as the birth-date maximum before UTC midnight', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-08T16:30:00Z'));
+      renderPage('/patients/new');
+      expect(await screen.findByLabelText('Birth date')).toHaveAttribute(
+        'max',
+        '2026-10-09',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('lists patients and submits search to the API', async () => {
     renderPage('/patients');
     expect(

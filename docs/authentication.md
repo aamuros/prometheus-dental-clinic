@@ -50,6 +50,11 @@ application APIs after the `requireSession` middleware in `worker/app.ts`;
 administrator operations also require `requireAdmin`. Role checks never trust
 browser state or a cached role cookie. Health remains public.
 
+The middleware also checks the current account ban flag, so a ban denies
+application access through sessions issued before the ban. Logout remains
+available to clear those sessions. Expired bans are cleared by Better Auth on
+the next successful login.
+
 The exposed Better Auth flows are email/password login, logout, session lookup,
 and administrator account creation. Public signup is disabled in Better Auth
 and has no exposed route. Other plugin endpoints, including role changes,

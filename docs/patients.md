@@ -32,6 +32,9 @@ limited to 200 characters, contact numbers to 30 including formatting, and email
 to 254. Phone formatting allows an optional leading `+`, spaces, parentheses,
 and hyphens. Mutation bodies are limited to 8 KiB.
 
+The birth-date maximum uses the current clinic date in Asia/Manila on both
+the server and the form, including the hours before UTC reaches that date.
+
 Writes require `Origin` to match `BETTER_AUTH_URL`; UI visibility does not grant
 permission. Responses remain uncached, errors safe, and logs omit patient fields
 and search strings. Drizzle binds query values; search treats `%`, `_`, and
