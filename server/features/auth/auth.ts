@@ -1,4 +1,5 @@
 import type { ServerEnv } from '../../env.js';
+import { ConfigurationError } from '../../configuration-error.js';
 import { betterAuth } from 'better-auth/minimal';
 import type { BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -11,7 +12,14 @@ import * as schema from '../../db/schema.js';
 export function authOptions(
   env: Pick<ServerEnv, 'BETTER_AUTH_SECRET' | 'BETTER_AUTH_URL'>,
 ) {
-  const origin = new URL(env.BETTER_AUTH_URL);
+  if (!env.BETTER_AUTH_URL.trim())
+    throw new ConfigurationError('BETTER_AUTH_URL', 'missing');
+  let origin: URL;
+  try {
+    origin = new URL(env.BETTER_AUTH_URL);
+  } catch {
+    throw new ConfigurationError('BETTER_AUTH_URL', 'invalid');
+  }
   if (
     origin.origin !== env.BETTER_AUTH_URL ||
     (origin.protocol !== 'https:' &&
@@ -20,12 +28,12 @@ export function authOptions(
         ['localhost', '127.0.0.1'].includes(origin.hostname)
       ))
   ) {
-    throw new Error(
-      'BETTER_AUTH_URL must be an HTTPS origin (HTTP is allowed only on localhost)',
-    );
+    throw new ConfigurationError('BETTER_AUTH_URL', 'invalid');
   }
+  if (!env.BETTER_AUTH_SECRET.trim())
+    throw new ConfigurationError('BETTER_AUTH_SECRET', 'missing');
   if (env.BETTER_AUTH_SECRET.length < 32)
-    throw new Error('A strong auth secret is required');
+    throw new ConfigurationError('BETTER_AUTH_SECRET', 'invalid');
   return {
     appName: 'Prometheus Dental Clinic',
     baseURL: env.BETTER_AUTH_URL,

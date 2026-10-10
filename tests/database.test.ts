@@ -7,7 +7,7 @@ describe('Server database client', () => {
     'rejects a missing connection without private details',
     (url) => {
       expect(() => createDatabase({ DATABASE_URL: url })).toThrow(
-        'DATABASE_URL is required',
+        'DATABASE_URL is missing',
       );
     },
   );

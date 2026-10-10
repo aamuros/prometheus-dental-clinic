@@ -88,6 +88,7 @@ beforeEach(() => {
   };
   state.auth = makeTestAuth(store);
   vi.spyOn(console, 'info').mockImplementation(() => undefined);
+  vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 });
 
 describe('Clinic authentication and authorization', () => {
@@ -100,7 +101,7 @@ describe('Clinic authentication and authorization', () => {
       'x-vercel-forwarded-for',
     ]);
   });
-  it('hides unexpected adapter errors from responses and logs', async () => {
+  it('logs a safe category for adapter errors without exposing private details', async () => {
     if (!state.auth) throw new Error('Missing auth');
     const context = await state.auth.$context;
     vi.spyOn(context.adapter, 'findOne').mockRejectedValue(
@@ -113,7 +114,14 @@ describe('Clinic authentication and authorization', () => {
     });
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: 'Internal server error' });
-    expect(log).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: 'server_error',
+        code: 'UNEXPECTED_ERROR',
+        method: 'POST',
+        status: 500,
+      }),
+    );
   });
 
   it('rejects missing and forged sessions but leaves health public', async () => {

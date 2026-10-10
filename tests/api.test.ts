@@ -24,9 +24,20 @@ app.get('/api/test-error', () => {
 app.get('/api/test-rejection', () => {
   throw new HTTPException(400, { message: 'private validation details' });
 });
+app.get('/api/test-database-error', () => {
+  throw new Error('private database credentials and SQL', {
+    cause: { code: '42P01', detail: 'private patient information' },
+  });
+});
+app.get('/api/test-private-error-code', () => {
+  throw new Error('private exception', {
+    cause: { code: 'private-patient-data' },
+  });
+});
 
 beforeEach(() => {
   vi.spyOn(console, 'info').mockImplementation(() => undefined);
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
 describe('Hono API', () => {
@@ -74,6 +85,36 @@ describe('Hono API', () => {
     const response = await app.request('/api/test-rejection');
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'Request rejected' });
+  });
+
+  it('logs only an allowlisted database code when a query fails', async () => {
+    const response = await app.request(
+      '/api/test-database-error?token=private',
+    );
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: 'Internal server error' });
+    expect(console.error).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: 'server_error',
+        code: 'DATABASE_ERROR',
+        databaseCode: '42P01',
+        method: 'GET',
+        status: 500,
+      }),
+    );
+  });
+
+  it('never logs an unrecognized provider error code', async () => {
+    const response = await app.request('/api/test-private-error-code');
+    expect(response.status).toBe(500);
+    expect(console.error).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: 'server_error',
+        code: 'UNEXPECTED_ERROR',
+        method: 'GET',
+        status: 500,
+      }),
+    );
   });
 
   it('logs only method, status, and timing', async () => {

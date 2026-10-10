@@ -10,6 +10,14 @@ authRoutes.use('*', async (c, next) => {
     c.req.method === 'POST' &&
     c.req.header('Origin') !== c.env.BETTER_AUTH_URL
   ) {
+    console.warn(
+      JSON.stringify({
+        event: 'auth_origin_rejected',
+        code: 'AUTH_ORIGIN_REJECTED',
+        method: 'POST',
+        status: 403,
+      }),
+    );
     return c.json({ error: 'Untrusted request origin' }, 403);
   }
   await next();
