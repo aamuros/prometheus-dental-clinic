@@ -101,8 +101,12 @@ See the updated [roadmap](roadmap.md) for completed versus remaining work and th
 ## Main stabilization verification
 
 Rechecked on 2026-10-10 (Asia/Manila). `pnpm check` passed, including strict
-TypeScript, lint, formatting, all 188 tests in eleven files, and the Cloudflare
-Worker/client production build. `pnpm audit --audit-level=high` passed with one
-moderate advisory. The configured Node 24.19.0 and pnpm 12.10.1 versions were
-used. Database, browser, and hosted runtime checks were not repeated; the release
-requirements above still apply.
+TypeScript, lint, formatting, all 189 tests in twelve files, and the Cloudflare
+Worker/client production build. The existing Vercel Node ESM import fix was
+incorporated without preview deployment settings. Its regression test loads the
+emitted API in plain Node and verifies health/session responses without database
+access. `pnpm build:vercel` also passed, including NodeNext typechecking.
+
+`pnpm audit --audit-level=high` passed with one moderate advisory. The configured
+Node 24.19.0 and pnpm 12.10.1 versions were used. Database, browser, and hosted
+runtime checks were not repeated; the release requirements above still apply.
