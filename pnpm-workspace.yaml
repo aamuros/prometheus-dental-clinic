@@ -1,6 +1,11 @@
 # pnpm settings for this single application; this is not a monorepo.
 saveExact: true
 strictPeerDependencies: true
+# Vercel's Function compiler does not canonicalize pnpm package symlinks.
+# Expose these transitive declarations at the paths its compiler host uses.
+publicHoistPattern:
+  - '@better-auth/drizzle-adapter'
+  - undici-types
 allowBuilds:
   esbuild: true
 minimumReleaseAgeExclude:

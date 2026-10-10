@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { expect, it } from 'vitest';
 
-it('loads emitted ESM in plain Node and serves health and session without a database', () => {
+it('compiles the root config and loads emitted ESM in plain Node without a database', () => {
   // Vitest resolves extensionless source imports; Node must load emitted .js.
   const output = join(process.cwd(), 'output');
   mkdirSync(output, { recursive: true });
@@ -13,7 +13,7 @@ it('loads emitted ESM in plain Node and serves health and session without a data
     execFileSync(process.execPath, [
       'node_modules/typescript/bin/tsc',
       '--project',
-      'tsconfig.vercel.json',
+      'tsconfig.json',
       '--noEmit',
       'false',
       '--outDir',
