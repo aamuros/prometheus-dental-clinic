@@ -60,6 +60,14 @@ try {
   assert.deepEqual(await health.json(), { status: 'ok' });
   assert.equal((await request('/api/session')).status, 401);
   assert.equal((await request('/api/patients')).status, 401);
+  if (origin.startsWith('https:')) {
+    // Vercel overwrites test IP headers. Repeated runs share the real client
+    // bucket, so let earlier verification logins expire before this suite.
+    console.log(
+      'Waiting for the preview login rate window before synthetic verification',
+    );
+    await setTimeout(61000);
+  }
   for (const feature of ['appointment', 'dental-record'])
     assert.ok(
       !existsSync(`.local/${feature}-smoke.json`),

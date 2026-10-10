@@ -35,7 +35,8 @@ and stop Node test servers; test routes are absent from deployed code.
 
 `pnpm workflows:verify` orchestrates synthetic accounts and API patient setup,
 runs the retained scheduling/clinical verifiers, and cleans fixtures in `finally`.
-It waits one minute between suites to preserve the real login rate limit.
+It waits one minute before preview logins and between suites to preserve the
+real client IP login rate limit during repeated runs.
 For interactive browser checks, use feature smoke tools to seed synthetic staff, dentists and patients; run
 `verify` for appointments and clinical records, then `cleanup` for each run.
 Fixtures and random credentials live in ignored `.local/`, mode 600. The

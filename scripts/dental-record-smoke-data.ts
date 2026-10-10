@@ -291,6 +291,7 @@ async function main() {
   const invalidJson = await fetch(`${origin}${path}`, {
     method: 'POST',
     headers: {
+      ...verificationHeaders(origin),
       Origin: origin,
       Cookie: clinical,
       'Content-Type': 'application/json',
@@ -591,7 +592,16 @@ async function main() {
   );
 }
 main().catch((error: unknown) => {
-  if (error instanceof assert.AssertionError) console.error(error.message);
+  if (error instanceof assert.AssertionError) {
+    console.error(error.message);
+    console.error(
+      error.stack
+        ?.split('\n')
+        .filter((line) => line.trimStart().startsWith('at '))
+        .slice(0, 2)
+        .join('\n'),
+    );
+  }
   console.error(
     'Clinical smoke verification failed; private provider details suppressed. Fixtures remain for inspection/cleanup.',
   );
