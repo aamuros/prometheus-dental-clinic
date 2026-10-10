@@ -1,3 +1,4 @@
+import { developmentEnv } from './development-env.js';
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import {
@@ -7,50 +8,14 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { parseEnv } from 'node:util';
 import { and, eq, inArray, like } from 'drizzle-orm';
-import { createDatabase } from '../worker/db/client';
-import { patients, user } from '../worker/db/schema';
-import { createAuth } from '../worker/features/auth/auth';
+import { createDatabase } from '../server/db/client';
+import { patients, user } from '../server/db/schema';
+import { createAuth } from '../server/features/auth/auth';
 
 // Synthetic fixtures only, driven from an authorized developer's terminal.
-// No fixture/cleanup endpoint is included in the application Worker.
-const statePath = '.wrangler/patient-smoke.json';
-
-function developmentEnv() {
-  const context: unknown = JSON.parse(readFileSync('.neon', 'utf8'));
-  assert.ok(
-    context &&
-      typeof context === 'object' &&
-      'branch' in context &&
-      context.branch === 'development',
-    'Select development first',
-  );
-  const development = parseEnv(readFileSync('.env.local', 'utf8'));
-  const local = parseEnv(readFileSync('.dev.vars', 'utf8'));
-  assert.equal(development.NEON_BRANCH, 'development');
-  assert.ok(local.DATABASE_URL && local.BETTER_AUTH_SECRET);
-  assert.equal(
-    local.DATABASE_URL,
-    development.DATABASE_URL,
-    'Database binding mismatch',
-  );
-  for (const source of [
-    process.env,
-    ...(existsSync('.env') ? [parseEnv(readFileSync('.env', 'utf8'))] : []),
-  ]) {
-    for (const key of ['DATABASE_URL', 'DATABASE_URL_UNPOOLED'])
-      assert.ok(
-        !source[key] || source[key] === development[key],
-        'Database override mismatch',
-      );
-  }
-  return {
-    DATABASE_URL: local.DATABASE_URL,
-    BETTER_AUTH_SECRET: local.BETTER_AUTH_SECRET,
-    BETTER_AUTH_URL: 'http://127.0.0.1:4180',
-  };
-}
+// No fixture/cleanup endpoint is included in the application.
+const statePath = '.local/patient-smoke.json';
 
 function readState() {
   const data: unknown = JSON.parse(readFileSync(statePath, 'utf8'));
@@ -68,7 +33,9 @@ function readState() {
 }
 
 async function main() {
-  const env = developmentEnv();
+  const env = developmentEnv(
+    process.env.VERIFY_BASE_URL ?? 'http://127.0.0.1:4180',
+  );
   const db = createDatabase(env);
   const action = process.argv[2];
   if (action === 'seed') {
@@ -79,7 +46,7 @@ async function main() {
         byte.toString(16).padStart(2, '0'),
       ).join(''),
     };
-    mkdirSync('.wrangler', { recursive: true });
+    mkdirSync('.local', { recursive: true });
     writeFileSync(statePath, JSON.stringify(state), { mode: 0o600 });
     for (const role of ['admin', 'staff'] as const) {
       await createAuth(env).api.createUser({

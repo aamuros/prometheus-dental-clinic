@@ -3,12 +3,7 @@
   "compilerOptions": {
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
-    "types": [
-      "node",
-      "vite/client",
-      "@testing-library/jest-dom",
-      "@cloudflare/workers-types"
-    ]
+    "types": ["node", "vite/client", "@testing-library/jest-dom"]
   },
   "include": [
     "api/**/*.ts",
@@ -16,7 +11,6 @@
     "vitest.config.ts",
     "drizzle.config.ts",
     "neon.ts",
-    "worker/bindings.d.ts",
     "scripts/*.ts",
     "tests"
   ]

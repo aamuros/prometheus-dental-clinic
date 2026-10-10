@@ -1,3 +1,4 @@
+import type { ServerEnv } from '../../env.js';
 import { betterAuth } from 'better-auth/minimal';
 import type { BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -6,9 +7,9 @@ import { adminAc, defaultAc } from 'better-auth/plugins/admin/access';
 import { createDatabase } from '../../db/client.js';
 import * as schema from '../../db/schema.js';
 
-// Shared by credential-free tests; the Worker always supplies Drizzle.
+// Shared by credential-free tests; the server always supplies Drizzle.
 export function authOptions(
-  env: Pick<WorkerBindings, 'BETTER_AUTH_SECRET' | 'BETTER_AUTH_URL'>,
+  env: Pick<ServerEnv, 'BETTER_AUTH_SECRET' | 'BETTER_AUTH_URL'>,
 ) {
   const origin = new URL(env.BETTER_AUTH_URL);
   if (
@@ -56,7 +57,7 @@ export function authOptions(
     advanced: {
       useSecureCookies: origin.protocol === 'https:',
       defaultCookieAttributes: { httpOnly: true, sameSite: 'lax' as const },
-      ipAddress: { ipAddressHeaders: ['cf-connecting-ip'] },
+      ipAddress: { ipAddressHeaders: ['x-vercel-forwarded-for'] },
     },
     logger: { disabled: true },
     // Unexpected adapter errors must reach Hono's safe handler instead of
@@ -73,7 +74,7 @@ export function authOptions(
   } satisfies BetterAuthOptions;
 }
 
-export function createAuth(env: WorkerBindings) {
+export function createAuth(env: ServerEnv) {
   return betterAuth({
     ...authOptions(env),
     // Neon's HTTP adapter cannot use interactive transactions.

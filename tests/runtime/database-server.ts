@@ -1,10 +1,11 @@
+import type { ServerEnv } from '../../server/env.js';
 import { sql } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { app as application } from '../../worker/app';
-import { createDatabase } from '../../worker/db/client';
+import { app as application } from '../../server/app';
+import { createDatabase } from '../../server/db/client';
 
 // Test-only entry point. The application's entry point never imports this file.
-const app = new Hono<{ Bindings: WorkerBindings }>();
+const app = new Hono<{ Bindings: ServerEnv }>();
 app.get('/api/__verify/database', async (c) => {
   const digest = await crypto.subtle.digest(
     'SHA-256',
@@ -63,5 +64,5 @@ app.get('/api/__verify/database', async (c) => {
   });
 });
 
-app.all('*', (c) => application.fetch(c.req.raw, c.env, c.executionCtx));
-export default { fetch: app.fetch } satisfies ExportedHandler<WorkerBindings>;
+app.all('*', (c) => application.fetch(c.req.raw, c.env));
+export default { fetch: app.fetch };

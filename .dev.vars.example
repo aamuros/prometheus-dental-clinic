@@ -1,8 +1,0 @@
-# Worker runtime only. Copy to .dev.vars (ignored) and replace placeholders.
-# Use a pooled Neon URL and a runtime role with only the permissions it needs.
-DATABASE_URL="postgresql://RUNTIME_ROLE:REPLACE_ME@ep-EXAMPLE-pooler.REGION.aws.neon.tech/prometheus_dental_clinic?sslmode=require"
-BETTER_AUTH_SECRET="REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS"
-BETTER_AUTH_URL="http://127.0.0.1:5173"
-
-# Production DATABASE_URL belongs in an encrypted Cloudflare Worker secret.
-# Do not copy DATABASE_URL_UNPOOLED to the Worker or put either URL in VITE_*.

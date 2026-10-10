@@ -17,7 +17,7 @@ accounts until the existing session expired or was explicitly revoked.
 Better Auth's admin plugin checks bans when creating a session, while the
 application middleware previously checked only the current role. Clinical
 routes already checked the ban flag separately, but the other application APIs
-lacked that check. `worker/features/auth/middleware.ts:19` now rejects the current
+lacked that check. `server/features/auth/middleware.ts:19` now rejects the current
 user's ban flag on every protected request. Logout remains available.
 
 Regression tests use the real Better Auth configuration and memory adapter:
@@ -29,7 +29,7 @@ verify the session is revoked. Both admin and staff cases failed before the fix.
 
 Between midnight and 07:59 in Manila, the server and form incorrectly rejected
 the current clinic date as a future birth date. The server comparison at
-`worker/features/patients/validation.ts:43` and form maximum at
+`server/features/patients/validation.ts:43` and form maximum at
 `src/features/patients/patient-form.tsx:79` now use the existing `clinicDate()`
 helper. Regression tests cover the Manila midnight boundary, reject tomorrow,
 and assert the rendered date input's maximum.
@@ -52,7 +52,7 @@ Authentication tests exercise Better Auth against its memory adapter. Feature
 API tests mock persistence queries; React tests use jsdom and synthetic fetch
 responses. These verify application orchestration, validation, permissions, and
 UI interactions, but cannot prove PostgreSQL constraints, trigger atomicity,
-real concurrent writes, or workerd/hosted runtime behavior. The schema and
+real concurrent writes, or Node/hosted runtime behavior. The schema and
 queries were reviewed locally. Earlier live verification is documented in each
 feature's notes and was not repeated here.
 
@@ -78,35 +78,9 @@ feature's notes and was not repeated here.
 - **Dependency audit:** the high/critical threshold passes, with one moderate
   advisory remaining. No dependency changes were made.
 
-## Checks and external verification
+## Current verification
 
-- Targeted frontend/Worker/tooling typecheck and the four changed test files
-  passed after the two fixes (67 tests at that point).
-- `pnpm audit --audit-level=high` passed; one moderate advisory remains.
-- Full `pnpm check` passed: strict frontend/Worker/tooling TypeScript,
-  zero-warning lint, formatting, all 186 tests in ten files, and both production
-  bundles. Wrangler logs were directed to the ignored local `.wrangler/logs`
-  directory and telemetry was disabled for the check.
-- `pnpm auth:verify` and `pnpm db:verify` require matching development Neon
-  credentials in `.neon`, `.env.local`, and `.dev.vars`, access to Neon, and a
-  local workerd runtime. Feature smoke helpers likewise require a verified
-  development endpoint, synthetic fixture setup/cleanup, and a local application
-  runtime. They were not run during this review; no database SQL was executed.
-- Browser/E2E and hosted production behavior were not verified. No local server,
-  deployment, production-data access, or new E2E tooling was used.
-
-See the updated [roadmap](roadmap.md) for completed versus remaining work and the
-[production checklist](security.md) for release requirements.
-
-## Main stabilization verification
-
-Rechecked on 2026-10-10 (Asia/Manila). `pnpm check` passed, including strict
-TypeScript, lint, formatting, all 189 tests in twelve files, and the Cloudflare
-Worker/client production build. The existing Vercel Node ESM import fix was
-incorporated without preview deployment settings. Its regression test loads the
-emitted API in plain Node and verifies health/session responses without database
-access. `pnpm build:vercel` also passed, including NodeNext typechecking.
-
-`pnpm audit --audit-level=high` passed with one moderate advisory. The configured
-Node 24.19.0 and pnpm 12.10.1 versions were used. Database, browser, and hosted
-runtime checks were not repeated; the release requirements above still apply.
+This report describes the retained application fixes before the runtime migration.
+Use [verification](verification.md) for current Node/Vercel procedures and
+[the migration record](vercel-migration.md) for current results. Database triggers,
+constraints, session/ban rules and Manila date behavior are preserved.

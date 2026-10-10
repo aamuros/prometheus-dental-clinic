@@ -1,9 +1,10 @@
+import type { ServerEnv } from '../../env.js';
 import { createMiddleware } from 'hono/factory';
 import type { StaffSession } from '../../../shared/auth.js';
 import { createAuth } from './auth.js';
 
 export type AuthEnv = {
-  Bindings: WorkerBindings;
+  Bindings: ServerEnv;
   Variables: {
     auth: ReturnType<typeof createAuth>;
     staffSession: StaffSession;

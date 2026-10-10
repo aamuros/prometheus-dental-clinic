@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { app } from '../worker/app';
-import * as queries from '../worker/features/dental-records/queries';
+import { app } from '../server/app';
+import * as queries from '../server/features/dental-records/queries';
 import {
   parseDentalRecord,
   parseRecordPage,
-} from '../worker/features/dental-records/validation';
+} from '../server/features/dental-records/validation';
 import { isFdiTooth } from '../shared/dental-records';
 import { addClinicDays, clinicDate } from '../shared/appointments';
 
 const state = vi.hoisted(() => ({ role: 'staff' as string | null }));
-vi.mock('../worker/features/auth/auth', () => ({
+vi.mock('../server/features/auth/auth', () => ({
   createAuth: () => ({
     api: {
       getSession: async () =>
@@ -26,9 +26,9 @@ vi.mock('../worker/features/auth/auth', () => ({
     },
   }),
 }));
-vi.mock('../worker/db/client', () => ({ createDatabase: vi.fn(() => ({})) }));
+vi.mock('../server/db/client', () => ({ createDatabase: vi.fn(() => ({})) }));
 vi.mock(
-  '../worker/features/dental-records/queries',
+  '../server/features/dental-records/queries',
   async (importOriginal) => ({
     ...(await importOriginal<typeof queries>()),
     isClinicalUser: vi.fn(),
