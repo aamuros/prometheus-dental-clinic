@@ -79,7 +79,25 @@ async function handleAuth(
   request: Request,
 ) {
   const response = await auth.handler(request);
-  if (response.status < 400) return response;
+  if (response.status < 400) {
+    // Browser authentication uses HttpOnly cookies. Better Auth also returns a
+    // token in login/session JSON; omit that bearer credential from clinic APIs.
+    const body: unknown = await response.json();
+    if (body && typeof body === 'object') {
+      if ('token' in body) delete body.token;
+      if (
+        'session' in body &&
+        body.session &&
+        typeof body.session === 'object' &&
+        'token' in body.session
+      )
+        delete body.session.token;
+    }
+    return Response.json(body, {
+      status: response.status,
+      headers: response.headers,
+    });
+  }
   const headers = new Headers(response.headers);
   const retryAfter = headers.get('X-Retry-After');
   if (retryAfter) headers.set('Retry-After', retryAfter);

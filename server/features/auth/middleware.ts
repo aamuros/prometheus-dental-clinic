@@ -8,6 +8,7 @@ export type AuthEnv = {
   Variables: {
     auth: ReturnType<typeof createAuth>;
     staffSession: StaffSession;
+    sessionId: string;
   };
 };
 
@@ -19,13 +20,22 @@ export const requireSession = createMiddleware<AuthEnv>(async (c, next) => {
   // Better Auth checks bans on login, so also deny sessions issued before a ban.
   if (session.user.banned || (role !== 'admin' && role !== 'staff'))
     return c.json({ error: 'Access denied' }, 403);
+  if (
+    session.user.passwordChangeRequired &&
+    !['/api/session', '/api/staff/password'].includes(c.req.path)
+  )
+    return c.json({ error: 'Password change required' }, 403);
   c.set('auth', auth);
+  c.set('sessionId', session.session?.id ?? '');
   c.set('staffSession', {
     user: {
       id: session.user.id,
       name: session.user.name,
       email: session.user.email,
       role,
+      ...(session.user.passwordChangeRequired
+        ? { passwordChangeRequired: true }
+        : {}),
     },
   });
   await next();

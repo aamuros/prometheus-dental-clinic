@@ -37,7 +37,8 @@ available to clear those sessions. Expired bans are cleared by Better Auth on
 the next successful login.
 
 The exposed Better Auth flows are email/password login, logout, session lookup,
-and administrator account creation. Public signup is disabled in Better Auth
+and administrator account creation. Session tokens are delivered only through
+HttpOnly cookies; login and session JSON responses omit them. Public signup is disabled in Better Auth
 and has no exposed route. Other plugin endpoints, including role changes,
 impersonation and profile changes, are not exposed. Account creation validates
 the allowed fields, role and password length before forwarding to Better Auth;
@@ -74,3 +75,13 @@ logout and persistent rate limits. Random synthetic accounts are cleaned up in
 Credential-free auth tests use Better Auth's memory adapter with the same
 options. Live preview verification must also inspect Secure/HttpOnly/SameSite
 cookies and attempt spoofed IP headers. See [verification](verification.md).
+
+## Staff account lifecycle
+
+Administrator listing, deactivation/reactivation, session revocation, assisted
+recovery and authenticated password changes are available through the
+feature-owned `/api/staff` routes. See [staff lifecycle](staff-lifecycle.md) for
+the endpoint contracts, recovery restrictions, atomic audits, last-admin guard
+and isolated Neon verification procedure. These endpoints reuse Better Auth's
+credential hashing and auth tables; raw password/plugin mutation routes remain
+closed. Recovery does not require an email provider.

@@ -5,8 +5,11 @@ server-enforced admin/staff roles. Its headers and safe error responses are usef
 application must implement and verify these safeguards before processing private
 patient or clinic information. Choose controls for the clinic's data and access
 model. See [authentication](authentication.md) for the verified development
-flows. The full production checklist remains open, including account removal,
-session revocation by administrators, and deployment access controls.
+flows. [Staff lifecycle](staff-lifecycle.md) adds account deactivation, administrator
+session revocation, password changes/recovery and atomic audit records. Accounts
+are retained for historical clinical references. The full production checklist
+remains open, including operational recovery procedures, audit retention and
+deployment access controls.
 
 - [ ] **Authentication:** identify permitted users, protect entry points, and
       provide account removal and session revocation. Use a maintained provider

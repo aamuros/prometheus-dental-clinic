@@ -8,6 +8,7 @@ import { authRoutes } from './features/auth/routes.js';
 import { patientRoutes } from './features/patients/routes.js';
 import { appointmentRoutes } from './features/appointments/routes.js';
 import { dentalRecordRoutes } from './features/dental-records/routes.js';
+import { staffRoutes } from './features/staff/routes.js';
 
 export const app = new Hono<AuthEnv>();
 
@@ -53,6 +54,7 @@ app.route('/api/auth', authRoutes);
 // Application APIs registered below this point require a database session.
 app.use('/api/*', requireSession);
 app.get('/api/session', (c) => c.json(c.get('staffSession')));
+app.route('/api/staff', staffRoutes);
 app.route('/api/patients', patientRoutes);
 app.route('/api/appointments', appointmentRoutes);
 app.route('/api/dental-records', dentalRecordRoutes);

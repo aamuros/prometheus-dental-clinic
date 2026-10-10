@@ -53,6 +53,10 @@ See [authentication](authentication.md).
 `server/db/client.ts` creates request-scoped Drizzle clients with Neon's HTTP
 driver and a server-only pooled `DATABASE_URL`. Health does not query the database.
 HTTP batch transactions work; interactive transaction callbacks do not.
+Staff lifecycle mutations acquire an account-table write lock in the first
+batch statement, then recheck authority and last-admin eligibility in a fresh
+READ COMMITTED snapshot. Account changes, session revocation and audit insertion
+commit together. See [staff lifecycle](staff-lifecycle.md).
 
 `server/db/schema.ts` owns auth tables and exports feature-owned tables. Reviewed
 SQL preserves [appointment exclusion constraints](appointments.md), restrictive

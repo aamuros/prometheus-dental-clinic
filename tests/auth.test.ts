@@ -152,6 +152,13 @@ describe('Clinic authentication and authorization', () => {
     expect((await request('/api/auth/sign-out', {}, cookie)).status).toBe(200);
     expect((await request('/api/session', undefined, cookie)).status).toBe(401);
   });
+  it('keeps session tokens in HttpOnly cookies and out of JSON responses', async () => {
+    const { cookie, response } = await login('staff');
+    expect(await response.text()).not.toContain('"token"');
+    const details = await request('/api/auth/get-session', undefined, cookie);
+    expect(details.status).toBe(200);
+    expect(await details.text()).not.toContain('"token"');
+  });
 
   it('rejects expired sessions and observes role changes without trusting cached cookies', async () => {
     const { cookie } = await login('admin');
