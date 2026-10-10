@@ -5,6 +5,7 @@ export {
   dentalRecords,
   dentalRecordHistory,
 } from '../features/dental-records/schema.js';
+export { staffAudit } from '../features/staff/schema.js';
 import {
   bigint,
   boolean,
@@ -27,6 +28,9 @@ export const user = pgTable(
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     role: text('role').notNull().default('staff'),
     isDentist: boolean('is_dentist').notNull().default(false),
+    passwordChangeRequired: boolean('password_change_required')
+      .notNull()
+      .default(false),
     banned: boolean('banned').default(false),
     banReason: text('ban_reason'),
     banExpires: timestamp('ban_expires'),

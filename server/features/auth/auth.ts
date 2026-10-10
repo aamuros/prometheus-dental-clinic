@@ -40,6 +40,11 @@ export function authOptions(
     user: {
       additionalFields: {
         isDentist: { type: 'boolean', defaultValue: false, input: false },
+        passwordChangeRequired: {
+          type: 'boolean',
+          defaultValue: false,
+          input: false,
+        },
       },
     },
     session: {

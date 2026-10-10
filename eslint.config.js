@@ -9,6 +9,7 @@ export default defineConfig([
     'dist/**',
     'coverage/**',
     '.vercel/**',
+    '.local/**',
     'output/**',
     '.playwright-cli/**',
     '.agents/skills/**',
