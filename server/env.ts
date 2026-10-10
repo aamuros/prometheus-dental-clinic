@@ -10,6 +10,18 @@ export function serverEnv(
   requestOrigin: string,
 ): ServerEnv {
   let authOrigin = source.BETTER_AUTH_URL ?? '';
+  const productionHost = source.VERCEL_PROJECT_PRODUCTION_URL;
+  if (
+    source.VERCEL_ENV === 'production' &&
+    productionHost &&
+    /^(?:[a-z0-9-]+\.)+[a-z]{2,}$/i.test(productionHost)
+  ) {
+    // The platform's canonical domain is trusted independently of a stale
+    // configured origin. Never derive trusted origins from request headers.
+    const productionOrigin = new URL(`https://${productionHost}`).origin;
+    if (requestOrigin === productionOrigin || !authOrigin)
+      authOrigin = productionOrigin;
+  }
   if (source.VERCEL_ENV === 'preview') {
     // Trust only platform-supplied deployment hosts, never client Host/Origin.
     const origins = [source.VERCEL_URL, source.VERCEL_BRANCH_URL]

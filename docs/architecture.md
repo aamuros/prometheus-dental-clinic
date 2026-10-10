@@ -34,11 +34,14 @@ React and all existing feature components remain unchanged by the migration.
 Hono returns uncached JSON, health 200, unsupported health methods 405, safe
 404s and sanitized exceptions. Protected routes first enforce the current
 database session, role and ban status. Clinical-only access checks the dentist
-flag on the server. Request logs contain only method, status and duration.
+flag on the server. Request logs contain only method, status and duration;
+error diagnostics contain fixed categories and configuration names or allowlisted
+PostgreSQL codes, never exception text or request data.
 
 Better Auth uses native Node AsyncLocalStorage, Drizzle and database sessions.
 `server/env.ts` adapts process variables to a portable request environment.
-Production requires the configured HTTPS auth origin. Preview requests use only
+Production uses the configured HTTPS auth origin or the exact canonical domain
+supplied by Vercel through `VERCEL_PROJECT_PRODUCTION_URL`. Preview requests use only
 exact origins from Vercel's deployment/branch metadata, never wildcard hosts or
 client-controlled forwarding headers. All mutation CSRF checks remain enabled.
 Vercel's overwritten `x-vercel-forwarded-for` is the only trusted IP header;
