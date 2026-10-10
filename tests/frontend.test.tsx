@@ -10,7 +10,7 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAppRouter } from '../src/app/router';
 import { RouteError } from '../src/components/route-error';
-import { app } from '../worker/app';
+import { app } from '../server/app';
 
 function renderApp(path = '/') {
   const router = createAppRouter(

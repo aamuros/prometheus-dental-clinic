@@ -2,7 +2,7 @@
   "name": "prometheus-dental-clinic",
   "version": "0.0.0",
   "private": true,
-  "description": "Prometheus Dental Clinic management system built with React, Hono, Cloudflare Workers, and Neon PostgreSQL.",
+  "description": "Prometheus Dental Clinic management system built with React, Hono, Vercel Functions, and Neon PostgreSQL.",
   "type": "module",
   "license": "UNLICENSED",
   "packageManager": "pnpm@12.10.1",
@@ -10,28 +10,26 @@
     "node": ">=24.15.0 <25"
   },
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
-    "build:vercel": "tsc --noEmit -p tsconfig.vercel.json && vite build --mode vercel",
+    "dev": "node scripts/local.mjs",
+    "build": "tsc --noEmit -p tsconfig.server.json && vite build",
+    "build:vercel": "pnpm build",
     "db:generate": "node --env-file-if-exists=.env.local --env-file-if-exists=.env ./node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "node --env-file-if-exists=.env.local --env-file-if-exists=.env ./node_modules/drizzle-kit/bin.cjs migrate",
-    "db:verify": "node scripts/verify-database-runtime.mjs",
+    "db:verify": "node --import tsx scripts/verify-database-runtime.mjs",
     "auth:bootstrap": "tsx scripts/bootstrap-admin.ts",
-    "auth:verify": "node scripts/verify-auth-runtime.mjs",
+    "auth:verify": "node --import tsx scripts/verify-auth-runtime.mjs",
     "patients:smoke-data": "tsx scripts/patient-smoke-data.ts",
     "appointments:smoke-data": "tsx scripts/appointment-smoke-data.ts",
     "dental-records:smoke-data": "tsx scripts/dental-record-smoke-data.ts",
-    "cf:types": "wrangler types worker/bindings.d.ts --env-interface WorkerBindings --include-runtime false",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.worker.json && tsc --noEmit -p tsconfig.tools.json && tsc --noEmit -p tsconfig.vercel.json",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.server.json && tsc --noEmit -p tsconfig.tools.json",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build",
-    "preview": "pnpm build && vite preview --host 127.0.0.1",
-    "deploy:check": "pnpm check && wrangler deploy --dry-run",
-    "deploy": "pnpm check && wrangler deploy"
+    "preview": "pnpm build && node scripts/local.mjs --preview",
+    "workflows:verify": "node --env-file=.env.local --import tsx scripts/verify-workflows.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "1.2.0",
@@ -42,11 +40,10 @@
     "hono": "4.13.13",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "tailwind-merge": "3.7.0"
+    "tailwind-merge": "3.7.0",
+    "@hono/node-server": "2.1.4"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.63.0",
-    "@cloudflare/workers-types": "5.20261008.1",
     "@eslint/js": "10.0.1",
     "@neon/config": "1.8.4",
     "@tailwindcss/vite": "4.3.3",
@@ -68,7 +65,6 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.1",
     "vite": "8.3.3",
-    "vitest": "5.0.3",
-    "wrangler": "4.148.0"
+    "vitest": "5.0.3"
   }
 }

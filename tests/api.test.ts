@@ -1,8 +1,8 @@
 import { HTTPException } from 'hono/http-exception';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { app } from '../worker/app';
+import { app } from '../server/app';
 
-vi.mock('../worker/features/auth/auth', () => ({
+vi.mock('../server/features/auth/auth', () => ({
   createAuth: () => ({
     api: {
       getSession: async () => ({

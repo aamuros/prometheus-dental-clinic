@@ -2,32 +2,10 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { existsSync, readFileSync } from 'node:fs';
 import { setTimeout } from 'node:timers/promises';
-import { parseEnv } from 'node:util';
 
-const context = JSON.parse(readFileSync('.neon', 'utf8'));
-const development = parseEnv(readFileSync('.env.local', 'utf8'));
-const local = parseEnv(readFileSync('.dev.vars', 'utf8'));
-assert.equal(context.branch, 'development');
-assert.equal(development.NEON_BRANCH, 'development');
-assert.ok(local.DATABASE_URL && local.BETTER_AUTH_SECRET);
-assert.equal(local.DATABASE_URL, development.DATABASE_URL);
-for (const source of [
-  process.env,
-  ...(existsSync('.env') ? [parseEnv(readFileSync('.env', 'utf8'))] : []),
-]) {
-  for (const key of ['DATABASE_URL', 'DATABASE_URL_UNPOOLED'])
-    assert.ok(
-      !source[key] || source[key] === development[key],
-      'Database override mismatch',
-    );
-  for (const key of ['BETTER_AUTH_URL', 'BETTER_AUTH_SECRET'])
-    assert.ok(
-      !source[key] || source[key] === local[key],
-      'Auth override mismatch',
-    );
-}
+const { developmentEnv } = await import('./development-env.ts');
+const local = developmentEnv('http://127.0.0.1:8788');
 const baseURL = 'http://127.0.0.1:8788';
 const url = new URL(baseURL);
 assert.equal(url.protocol, 'http:');
@@ -44,39 +22,18 @@ const fingerprint = createHash('sha256')
   .digest('hex');
 const child = spawn(
   process.execPath,
-  [
-    'node_modules/wrangler/bin/wrangler.js',
-    'dev',
-    'tests/runtime/auth-worker.ts',
-    '--config',
-    'wrangler.jsonc',
-    '--local',
-    '--ip',
-    url.hostname,
-    '--port',
-    url.port,
-    '--var',
-    `BETTER_AUTH_URL:${baseURL}`,
-    '--inspector-port',
-    '0',
-    '--assets',
-    'dist/client',
-    '--log-level',
-    'error',
-    '--show-interactive-dev-session',
-    'false',
-  ],
+  ['--import', 'tsx', 'tests/runtime/serve.ts', 'auth', '8788'],
   {
     detached: true,
-    stdio: 'ignore',
-    env: {
-      ...process.env,
-      WRANGLER_SEND_METRICS: 'false',
-      WRANGLER_LOG_PATH: '.wrangler/logs',
-    },
+    stdio: ['ignore', 'ignore', 'pipe'],
+    env: { ...process.env, ...local },
   },
 );
 const exited = once(child, 'exit');
+let startupCode = '';
+child.stderr.on('data', (chunk) => {
+  startupCode = String(chunk).match(/E[A-Z]{3,30}/)?.[0] ?? startupCode;
+});
 
 async function request(
   path,
@@ -87,7 +44,7 @@ async function request(
     headers: {
       'Content-Type': 'application/json',
       Origin: origin,
-      'cf-connecting-ip': ip,
+      'x-vercel-forwarded-for': ip,
       ...headers,
       ...(cookie ? { Cookie: cookie } : {}),
     },
@@ -124,19 +81,23 @@ async function login(role) {
 let ready = false;
 try {
   for (let attempt = 0; attempt < 100; attempt++) {
-    assert.equal(child.exitCode, null, 'Local Worker exited before startup');
+    assert.equal(
+      child.exitCode,
+      null,
+      `Local Node server exited before startup (${startupCode})`,
+    );
     try {
       const response = await request('/api/health');
       ready =
         response.ok &&
         response.headers.get('X-Auth-Runtime-Verifier') === 'true';
     } catch {
-      /* Workerd is starting. */
+      /* Node server is starting. */
     }
     if (ready) break;
     await setTimeout(250);
   }
-  assert.ok(ready, 'Local Worker did not become ready');
+  assert.ok(ready, 'Local Node server did not become ready');
   assert.equal(
     (
       await request('/api/__verify/auth', {
@@ -300,7 +261,7 @@ try {
   assert.equal(limited.status, 429);
   assert.ok(limited.headers.get('Retry-After'));
   console.log(
-    'PASS: Better Auth + Drizzle/Neon in workerd; login, sessions, roles, admin account creation, CSRF, expiry, logout, and database-backed rate limits',
+    'PASS: Better Auth + Drizzle/Neon in Node.js; login, sessions, roles, admin account creation, CSRF, expiry, logout, and database-backed rate limits',
   );
 } finally {
   try {

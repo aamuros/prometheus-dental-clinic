@@ -1,3 +1,5 @@
+import { verificationHeaders } from './verification-headers.js';
+import { developmentEnv } from './development-env.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -8,68 +10,21 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { parseEnv } from 'node:util';
 import { and, eq, inArray, like } from 'drizzle-orm';
-import { createDatabase } from '../worker/db/client';
+import { createDatabase } from '../server/db/client';
 import {
   appointments,
   dentalRecordHistory,
   dentalRecords,
   patients,
   user,
-} from '../worker/db/schema';
-import { createAuth } from '../worker/features/auth/auth';
+} from '../server/db/schema';
+import { createAuth } from '../server/features/auth/auth';
 
-// Operator-only verification, never mounted in the application Worker.
-const origin = 'http://127.0.0.1:4180';
-const statePath = '.wrangler/dental-record-smoke.json';
-function developmentEnv() {
-  const context: unknown = JSON.parse(readFileSync('.neon', 'utf8'));
-  assert.ok(
-    context &&
-      typeof context === 'object' &&
-      'branch' in context &&
-      context.branch === 'development' &&
-      'projectId' in context &&
-      context.projectId === 'green-bar-82369299',
-  );
-  const development = parseEnv(readFileSync('.env.local', 'utf8'));
-  const local = parseEnv(readFileSync('.dev.vars', 'utf8'));
-  assert.equal(development.NEON_BRANCH, 'development');
-  assert.ok(
-    local.DATABASE_URL &&
-      local.BETTER_AUTH_SECRET &&
-      development.DATABASE_URL_UNPOOLED,
-  );
-  assert.equal(local.DATABASE_URL, development.DATABASE_URL);
-  for (const source of [
-    process.env,
-    ...(existsSync('.env') ? [parseEnv(readFileSync('.env', 'utf8'))] : []),
-  ]) {
-    for (const key of ['DATABASE_URL', 'DATABASE_URL_UNPOOLED'])
-      assert.ok(
-        !source[key] || source[key] === development[key],
-        'Unexpected database override',
-      );
-  }
-  // Metadata verified before use: this endpoint belongs to development
-  // br-polished-lab-b38jmw3l. Reject any other endpoint before issuing SQL.
-  const direct = new URL(development.DATABASE_URL_UNPOOLED);
-  const pooled = new URL(local.DATABASE_URL);
-  assert.equal(
-    direct.hostname,
-    'ep-shy-flower-b3mjfmsi.c-4.ap-southeast-1.aws.neon.tech',
-  );
-  assert.equal(pooled.hostname.replace('-pooler', ''), direct.hostname);
-  assert.equal(pooled.pathname, direct.pathname);
-  assert.ok(!direct.hostname.includes('-pooler'));
-  return {
-    DATABASE_URL: local.DATABASE_URL,
-    DATABASE_URL_UNPOOLED: development.DATABASE_URL_UNPOOLED,
-    BETTER_AUTH_SECRET: local.BETTER_AUTH_SECRET,
-    BETTER_AUTH_URL: origin,
-  };
-}
+// Operator-only verification, never mounted in the application.
+const origin = process.env.VERIFY_BASE_URL ?? 'http://127.0.0.1:4180';
+const statePath = '.local/dental-record-smoke.json';
+
 function readState() {
   const state: unknown = JSON.parse(readFileSync(statePath, 'utf8'));
   assert.ok(
@@ -96,7 +51,7 @@ async function responseRecord(response: Response) {
   return { id: record.id, version: record.version, raw: record };
 }
 async function main() {
-  const env = developmentEnv();
+  const env = developmentEnv(origin);
   const action = process.argv[2];
   if (action === 'migrate') {
     const result = spawnSync('pnpm', ['db:migrate'], {
@@ -119,7 +74,7 @@ async function main() {
         byte.toString(16).padStart(2, '0'),
       ).join(''),
     };
-    mkdirSync('.wrangler', { recursive: true });
+    mkdirSync('.local', { recursive: true });
     writeFileSync(statePath, JSON.stringify(state), { mode: 0o600 });
     for (const designation of ['admin', 'staff', 'dentist', 'second-dentist']) {
       const email = `clinical-smoke-${state.run}-${designation}@example.test`;
@@ -244,8 +199,9 @@ async function main() {
     return fetch(`${origin}${path}`, {
       method,
       headers: {
+        ...verificationHeaders(origin),
         'Content-Type': 'application/json',
-        'cf-connecting-ip': testIP,
+        'x-vercel-forwarded-for': testIP,
         ...(cookie ? { Cookie: cookie } : {}),
         ...(requestOrigin ? { Origin: requestOrigin } : {}),
       },
@@ -335,6 +291,7 @@ async function main() {
   const invalidJson = await fetch(`${origin}${path}`, {
     method: 'POST',
     headers: {
+      ...verificationHeaders(origin),
       Origin: origin,
       Cookie: clinical,
       'Content-Type': 'application/json',
@@ -635,7 +592,16 @@ async function main() {
   );
 }
 main().catch((error: unknown) => {
-  if (error instanceof assert.AssertionError) console.error(error.message);
+  if (error instanceof assert.AssertionError) {
+    console.error(error.message);
+    console.error(
+      error.stack
+        ?.split('\n')
+        .filter((line) => line.trimStart().startsWith('at '))
+        .slice(0, 2)
+        .join('\n'),
+    );
+  }
   console.error(
     'Clinical smoke verification failed; private provider details suppressed. Fixtures remain for inspection/cleanup.',
   );

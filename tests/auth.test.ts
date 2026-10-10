@@ -1,8 +1,8 @@
 import { betterAuth } from 'better-auth/minimal';
 import { memoryAdapter } from 'better-auth/adapters/memory';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { app } from '../worker/app';
-import { authOptions } from '../worker/features/auth/auth';
+import { app } from '../server/app';
+import { authOptions } from '../server/features/auth/auth';
 
 function makeTestAuth(store: Record<string, Record<string, unknown>[]>) {
   return betterAuth({
@@ -16,9 +16,9 @@ function makeTestAuth(store: Record<string, Record<string, unknown>[]>) {
 const { state } = vi.hoisted(() => ({
   state: { auth: undefined as ReturnType<typeof makeTestAuth> | undefined },
 }));
-vi.mock('../worker/features/auth/auth', async (importOriginal) => {
+vi.mock('../server/features/auth/auth', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../worker/features/auth/auth')>();
+    await importOriginal<typeof import('../server/features/auth/auth')>();
   return {
     ...actual,
     createAuth: () => {
@@ -48,7 +48,7 @@ async function request(
       headers: {
         'Content-Type': 'application/json',
         Origin: requestOrigin,
-        'cf-connecting-ip': '192.0.2.1',
+        'x-vercel-forwarded-for': '192.0.2.1',
         ...(cookie ? { Cookie: cookie } : {}),
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -91,6 +91,15 @@ beforeEach(() => {
 });
 
 describe('Clinic authentication and authorization', () => {
+  it('uses only the platform-overwritten Vercel IP header for rate limiting', () => {
+    const options = authOptions({
+      BETTER_AUTH_URL: origin,
+      BETTER_AUTH_SECRET: 'unit-test-only-secret-32-characters-long',
+    });
+    expect(options.advanced.ipAddress.ipAddressHeaders).toEqual([
+      'x-vercel-forwarded-for',
+    ]);
+  });
   it('hides unexpected adapter errors from responses and logs', async () => {
     if (!state.auth) throw new Error('Missing auth');
     const context = await state.auth.$context;

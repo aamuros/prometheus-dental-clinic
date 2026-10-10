@@ -1,3 +1,5 @@
+import { verificationHeaders } from './verification-headers.js';
+import { developmentEnv } from './development-env.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -8,59 +10,15 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { parseEnv } from 'node:util';
 import { and, eq, inArray, like } from 'drizzle-orm';
-import { createDatabase } from '../worker/db/client';
-import { appointments, patients, user } from '../worker/db/schema';
-import { createAuth } from '../worker/features/auth/auth';
+import { createDatabase } from '../server/db/client';
+import { appointments, patients, user } from '../server/db/schema';
+import { createAuth } from '../server/features/auth/auth';
 
-// Operator-only synthetic fixtures. Never included in the application Worker.
-const statePath = '.wrangler/appointment-smoke.json';
-const origin = 'http://127.0.0.1:4180';
-function developmentEnv() {
-  const context: unknown = JSON.parse(readFileSync('.neon', 'utf8'));
-  assert.ok(
-    context &&
-      typeof context === 'object' &&
-      'branch' in context &&
-      context.branch === 'development',
-    'Select development first',
-  );
-  const development = parseEnv(readFileSync('.env.local', 'utf8'));
-  const local = parseEnv(readFileSync('.dev.vars', 'utf8'));
-  assert.equal(development.NEON_BRANCH, 'development');
-  assert.ok(
-    local.DATABASE_URL &&
-      local.BETTER_AUTH_SECRET &&
-      development.DATABASE_URL_UNPOOLED,
-  );
-  assert.equal(
-    local.DATABASE_URL,
-    development.DATABASE_URL,
-    'Database binding mismatch',
-  );
-  for (const source of [
-    process.env,
-    ...(existsSync('.env') ? [parseEnv(readFileSync('.env', 'utf8'))] : []),
-  ]) {
-    for (const key of ['DATABASE_URL', 'DATABASE_URL_UNPOOLED'])
-      assert.ok(
-        !source[key] || source[key] === development[key],
-        'Database override mismatch',
-      );
-  }
-  const direct = new URL(development.DATABASE_URL_UNPOOLED);
-  const pooled = new URL(local.DATABASE_URL);
-  assert.ok(!direct.hostname.includes('-pooler'));
-  assert.equal(pooled.hostname.replace('-pooler', ''), direct.hostname);
-  assert.equal(pooled.pathname, direct.pathname);
-  return {
-    DATABASE_URL: local.DATABASE_URL,
-    DATABASE_URL_UNPOOLED: development.DATABASE_URL_UNPOOLED,
-    BETTER_AUTH_SECRET: local.BETTER_AUTH_SECRET,
-    BETTER_AUTH_URL: origin,
-  };
-}
+// Operator-only synthetic fixtures. Never included in the application.
+const statePath = '.local/appointment-smoke.json';
+const origin = process.env.VERIFY_BASE_URL ?? 'http://127.0.0.1:4180';
+
 function readState() {
   const data: unknown = JSON.parse(readFileSync(statePath, 'utf8'));
   assert.ok(
@@ -75,7 +33,7 @@ function readState() {
   return { run: data.run, password: data.password };
 }
 async function main() {
-  const env = developmentEnv();
+  const env = developmentEnv(origin);
   const action = process.argv[2];
   if (action === 'migrate') {
     // The runtime checks above confirm both URLs before invoking the existing
@@ -100,7 +58,7 @@ async function main() {
         byte.toString(16).padStart(2, '0'),
       ).join(''),
     };
-    mkdirSync('.wrangler', { recursive: true });
+    mkdirSync('.local', { recursive: true });
     writeFileSync(statePath, JSON.stringify(state), { mode: 0o600 });
     for (const role of ['admin', 'staff'] as const)
       await createAuth(env).api.createUser({
@@ -176,6 +134,7 @@ async function main() {
       return fetch(`${origin}${path}`, {
         method,
         headers: {
+          ...verificationHeaders(origin),
           'Content-Type': 'application/json',
           ...(requestOrigin ? { Origin: requestOrigin } : {}),
           ...(cookie ? { Cookie: cookie } : {}),
@@ -560,7 +519,7 @@ async function main() {
       404,
     );
     console.log(
-      'PASS: live workerd CRUD, simultaneous booking conflict, overlap variants, adjacent/different-dentist bookings, reschedule conflict, all statuses, cancellation/reopening, Manila midnight filtering, validation, archive rules, permissions and CSRF.',
+      'PASS: live Node.js CRUD, simultaneous booking conflict, overlap variants, adjacent/different-dentist bookings, reschedule conflict, all statuses, cancellation/reopening, Manila midnight filtering, validation, archive rules, permissions and CSRF.',
     );
     return;
   }

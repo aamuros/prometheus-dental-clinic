@@ -1,12 +1,12 @@
-import { app } from '../worker/app.js';
+import { app } from '../server/app.js';
+import { serverEnv } from '../server/env.js';
 
-// Vercel supplies Node.js environment variables instead of Worker bindings.
+// Vercel bundles this entry and its explicit .js ESM imports for Node.js.
 export default {
   fetch(request: Request) {
-    return app.fetch(request, {
-      DATABASE_URL: process.env.DATABASE_URL,
-      BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
-      BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
-    } satisfies WorkerBindings);
+    return app.fetch(
+      request,
+      serverEnv(process.env, new URL(request.url).origin),
+    );
   },
 };

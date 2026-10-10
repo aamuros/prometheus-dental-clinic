@@ -4,11 +4,11 @@
 
 Use kebab-case file names, PascalCase React components and types, and camelCase functions and variables. Name features for the application's domain rather than generic architectural layers. Route files compose features; shared components and utilities must have demonstrated reuse. Keep related functionality together and prefer direct imports over barrel files.
 
-`src/` owns browser behavior, `worker/` owns server behavior, and `shared/` owns small environment-independent contracts. Do not import server code into frontend modules, even to reuse configuration. The `@/` alias always refers to `src/`; shared contracts use an explicit relative import.
+`src/` owns browser behavior, `server/` owns server behavior, and `shared/` owns small environment-independent contracts. Do not import server code into frontend modules, even to reuse configuration. The `@/` alias always refers to `src/`; shared contracts use an explicit relative import.
 
 ## TypeScript and API patterns
 
-Keep strict checks enabled. Use `unknown` for external data and narrow or validate it; avoid unchecked `as` casts, `any`, and non-null assertions. Prefer functions and explicit types at public boundaries. Use `import type` for type-only dependencies. Library declarations use `skipLibCheck`; application code remains fully checked in separate frontend, Worker, and tooling passes.
+Keep strict checks enabled. Use `unknown` for external data and narrow or validate it; avoid unchecked `as` casts, `any`, and non-null assertions. Prefer functions and explicit types at public boundaries. Use `import type` for type-only dependencies. Library declarations use `skipLibCheck`; application code remains fully checked in separate frontend, Node server, and tooling passes.
 
 Use resource-oriented `/api/<resource>` URLs and normal HTTP verbs. Keep handlers thin and return JSON with accurate status codes. Successful response shapes may be resource-specific; errors use `{ error: string }`. Never include secrets, raw provider errors, or stack traces in responses. Throw `HTTPException` only with an intentional status; its message is not exposed by the global handler. Add explicit method handling where a route needs a 405 response and `Allow` header.
 
@@ -24,15 +24,15 @@ Request logs are intentionally minimal. Never log credentials, authorization hea
 
 Run the smallest relevant check while working, then `pnpm check` before merging or deploying. Add tests for meaningful business behavior, failure paths, permissions, and regressions. Prefer accessible queries in frontend tests; API tests should assert status, payload, and relevant headers. Keep the base tests independent of databases and external accounts.
 
-Vitest uses Node for Hono and jsdom for frontend tests. These verify handlers and React behavior, not every Cloudflare binding. After changing deployment configuration or adding runtime-specific integrations, run `pnpm preview` and check the complete flow in the local Workers runtime. Browser/E2E tooling is optional and should be added when real workflows justify it.
+Vitest uses Node for Hono and jsdom for frontend tests. After changing deployment configuration or runtime integrations, run `pnpm preview` and verify the complete Node flow and Vercel preview. Browser/E2E tooling should be used for meaningful runtime workflows.
 
 ## Dependencies and changes
 
 Use the pinned pnpm version and commit the lockfile. CI installs with `--frozen-lockfile`. pnpm settings live in `pnpm-workspace.yaml` even though this repository contains only one application. Exact versions, strict peer checks, and the small explicit dependency-build allowlist make installation predictable. Do not approve additional dependency build scripts without inspecting why they are required.
 
-Add a library only for a current requirement. Read its official documentation, check Node/Worker compatibility and peer requirements, and pin the tested version. Use `pnpm audit` when adding or updating dependencies. CI fails on high or critical advisories. Currently `sharp` is overridden to 0.35.5 to fix a vulnerability in Cloudflare development tooling; remove the override when upstream resolves a patched version and verification remains clean.
+Add a library only for a current requirement. Read its official documentation, check Node/Node server compatibility and peer requirements, and pin the tested version. Use `pnpm audit` when adding or updating dependencies. CI fails on high or critical advisories.
 
-When upgrading Node, TypeScript, Vite, Cloudflare tooling, or test infrastructure, run all checks and local preview from a clean install. In particular, do not upgrade TypeScript beyond the range supported by TypeScript ESLint. Update the compatibility date deliberately and verify runtime changes. Keep business features separate from foundation changes, avoid opportunistic refactoring, and document decisions only when their rationale will help future maintainers.
+When upgrading Node, TypeScript, Vite, Vercel configuration, or test infrastructure, run all checks and local preview from a clean install. In particular, do not upgrade TypeScript beyond the range supported by TypeScript ESLint. Verify runtime changes on a Vercel preview. Keep business features separate from foundation changes, avoid opportunistic refactoring, and document decisions only when their rationale will help future maintainers.
 
 ## Dependency update process
 
@@ -41,7 +41,7 @@ When upgrading Node, TypeScript, Vite, Cloudflare tooling, or test infrastructur
   `pnpm audit --audit-level=high` to identify specific work.
 - Update a small related set on a dedicated branch with
   `pnpm add --save-exact <package>@<version>` (add `-D` for development tooling).
-  Review changelogs, peer requirements, Worker compatibility, lockfile changes,
+  Review changelogs, peer requirements, Node server compatibility, lockfile changes,
   and any new build scripts. Avoid blanket upgrades.
 - Check whether an override's parent dependency now accepts a patched version.
   Remove an obsolete override, regenerate the lockfile, and audit again. The

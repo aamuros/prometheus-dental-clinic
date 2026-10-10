@@ -1,12 +1,13 @@
+import type { ServerEnv } from '../../server/env.js';
 import { Hono } from 'hono';
 import { and, eq, inArray, like } from 'drizzle-orm';
-import { app } from '../../worker/app';
-import { createAuth } from '../../worker/features/auth/auth';
-import { createDatabase } from '../../worker/db/client';
-import { account, rateLimit, session, user } from '../../worker/db/schema';
+import { app } from '../../server/app';
+import { createAuth } from '../../server/features/auth/auth';
+import { createDatabase } from '../../server/db/client';
+import { account, rateLimit, session, user } from '../../server/db/schema';
 
 // Local verification only. The production entry point never imports this file.
-const verifier = new Hono<{ Bindings: WorkerBindings }>();
+const verifier = new Hono<{ Bindings: ServerEnv }>();
 verifier.use('*', async (c, next) => {
   await next();
   c.header('X-Auth-Runtime-Verifier', 'true');
@@ -135,8 +136,8 @@ verifier.post('/api/__verify/auth', async (c) => {
   }
   return c.json({ error: 'Invalid action' }, 400);
 });
-verifier.all('*', (c) => app.fetch(c.req.raw, c.env, c.executionCtx));
+verifier.all('*', (c) => app.fetch(c.req.raw, c.env));
 
 export default {
   fetch: verifier.fetch,
-} satisfies ExportedHandler<WorkerBindings>;
+};

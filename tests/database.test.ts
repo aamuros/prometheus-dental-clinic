@@ -1,8 +1,8 @@
 import { sql } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
-import { createDatabase } from '../worker/db/client';
+import { createDatabase } from '../server/db/client';
 
-describe('Worker database client', () => {
+describe('Server database client', () => {
   it.each(['', '   '])(
     'rejects a missing connection without private details',
     (url) => {

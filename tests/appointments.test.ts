@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { app } from '../worker/app';
-import * as queries from '../worker/features/appointments/queries';
+import { app } from '../server/app';
+import * as queries from '../server/features/appointments/queries';
 import {
   parseAppointment,
   parseAppointmentSearch,
-} from '../worker/features/appointments/validation';
+} from '../server/features/appointments/validation';
 import {
   addClinicDays,
   clinicDate,
@@ -15,7 +15,7 @@ import {
 } from '../shared/appointments';
 
 const state = vi.hoisted(() => ({ role: 'staff' as string | null }));
-vi.mock('../worker/features/auth/auth', () => ({
+vi.mock('../server/features/auth/auth', () => ({
   createAuth: () => ({
     api: {
       getSession: async () =>
@@ -32,8 +32,8 @@ vi.mock('../worker/features/auth/auth', () => ({
     },
   }),
 }));
-vi.mock('../worker/db/client', () => ({ createDatabase: vi.fn(() => ({})) }));
-vi.mock('../worker/features/appointments/queries', async (importOriginal) => ({
+vi.mock('../server/db/client', () => ({ createDatabase: vi.fn(() => ({})) }));
+vi.mock('../server/features/appointments/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof queries>()),
   listAppointments: vi.fn(),
   findAppointment: vi.fn(),

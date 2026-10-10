@@ -1,12 +1,11 @@
 node_modules/
 dist/
 coverage/
-.wrangler/
+.local/
 .pnpm-store/
 .env*
 !.env.example
 .dev.vars*
-!.dev.vars.example
 *.tsbuildinfo
 *.log
 .DS_Store
@@ -14,3 +13,4 @@ output/
 .playwright-cli/
 .neon
 .vercel/
+.wrangler/

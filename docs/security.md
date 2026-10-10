@@ -10,7 +10,7 @@ session revocation by administrators, and deployment access controls.
 
 - [ ] **Authentication:** identify permitted users, protect entry points, and
       provide account removal and session revocation. Use a maintained provider
-      or library and verify its Cloudflare compatibility.
+      or library and verify its Node.js/Vercel compatibility.
 - [ ] **Authorization:** enforce permissions on every relevant server operation,
       including individual records, files, exports, and background jobs. Test
       denied access and cross-user or cross-organization access where applicable.
@@ -21,7 +21,7 @@ session revocation by administrators, and deployment access controls.
       HttpOnly, and SameSite attributes, expiration, rotation, and logout. Protect
       state-changing requests against CSRF with an appropriate origin/token
       strategy; do not make state changes through GET requests.
-- [ ] **Secrets:** keep credentials server-side in Worker secrets and deployment
+- [ ] **Secrets:** keep credentials server-side in Vercel environment secrets and deployment
       environment secrets. Scope access, rotate credentials, and never put them
       in `VITE_*`, shared modules, source control, or logs.
 - [ ] **Database and storage access:** use least-privilege credentials and

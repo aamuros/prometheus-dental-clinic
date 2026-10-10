@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { app } from '../worker/app';
-import * as queries from '../worker/features/patients/queries';
-import type { patients } from '../worker/features/patients/schema';
+import { app } from '../server/app';
+import * as queries from '../server/features/patients/queries';
+import type { patients } from '../server/features/patients/schema';
 import {
   parsePatient,
   parsePatientSearch,
-} from '../worker/features/patients/validation';
+} from '../server/features/patients/validation';
 
 const state = vi.hoisted(() => ({ role: 'staff' as string | null }));
-vi.mock('../worker/features/auth/auth', () => ({
+vi.mock('../server/features/auth/auth', () => ({
   createAuth: () => ({
     api: {
       getSession: async () =>
@@ -25,8 +25,8 @@ vi.mock('../worker/features/auth/auth', () => ({
     },
   }),
 }));
-vi.mock('../worker/db/client', () => ({ createDatabase: vi.fn(() => ({})) }));
-vi.mock('../worker/features/patients/queries', () => ({
+vi.mock('../server/db/client', () => ({ createDatabase: vi.fn(() => ({})) }));
+vi.mock('../server/features/patients/queries', () => ({
   listPatients: vi.fn(),
   findPatient: vi.fn(),
   createPatient: vi.fn(),

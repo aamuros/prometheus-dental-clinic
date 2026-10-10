@@ -1,7 +1,7 @@
 # Development roadmap
 
 Authentication, patients, appointments, and basic dental records are implemented.
-They use the existing React/TanStack Router frontend, Hono Worker API, Better Auth,
+They use the existing React/TanStack Router frontend, Hono Node API, Better Auth,
 and Neon/Drizzle persistence. The application is not yet ready for private
 production patient data: the [production security checklist](security.md) remains
 open. This roadmap distinguishes implemented functionality from remaining work.
@@ -30,7 +30,7 @@ evidence that those checks were repeated during this review.
    policy, and backup restoration. Read-access auditing for patient/clinical data
    is not implemented. Admin/staff plus a dentist designation are the current
    permission model; distinct receptionist/dentist roles are not implemented.
-2. **External verification:** repeat guarded auth/database workerd checks and
+2. **External verification:** repeat guarded auth/database Node.js checks and
    synthetic feature smoke checks against a verified development Neon endpoint.
    Confirm exclusion constraints, clinical audit-trigger rollback, real concurrent
    writes, and persistence independently of mocks. Browser and hosted production
