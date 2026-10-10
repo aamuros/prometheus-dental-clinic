@@ -1,5 +1,68 @@
 # Neon database verification
 
+## Current development database — 2026-10-10
+
+The application now uses the existing `prometheus-dental-clinic-development`
+project (`muddy-boat-93080753`) in organization `org-solitary-paper-36906181`,
+branch `development` (`br-red-sun-b3nj2cwd`), database `prometheus_dental_clinic`.
+Neon CLI metadata confirmed PostgreSQL 18 and region `aws-ap-southeast-1`.
+No project, branch, managed authentication service, or production connection
+was created for this setup.
+
+The authenticated CLI linked `.neon` and pulled database credentials into
+`.env.local`. Both pooled and direct credentials were compared privately with
+CLI connection strings for the explicit project, branch, database, and role.
+SQL confirmed the database identity and absence of application/migration tables
+before `pnpm db:migrate` applied all five committed migrations unchanged.
+
+The pooled runtime URL in `.dev.vars` matches `.env.local`; the direct URL stays
+in `.env.local` for migration tooling. `.env` is absent and no database/auth
+process overrides are set. A new random local auth secret and origin
+`http://127.0.0.1:5173` are configured in `.dev.vars`. Secret files have mode `600`
+and remain ignored; no secret values appear in this report.
+
+Post-migration SQL and Drizzle checks confirmed all nine application tables and
+their columns match the existing schema. All five migration ledger hashes and
+timestamps match the committed SQL/journal. The `btree_gist` extension,
+appointment overlap exclusion constraint, composite clinical foreign key, and
+`dental_records_audit` trigger exist. Tables created:
+
+- `auth_user`, `auth_account`, `auth_session`, `auth_verification`, `auth_rate_limit`
+- `patients`, `appointments`, `dental_records`, `dental_record_history`
+- `drizzle.__drizzle_migrations` (migration ledger)
+
+Verification passed with Node 24.19.0 and pnpm 12.10.1:
+
+- `pnpm check`: typechecks, lint, formatting, 189 tests in 12 files, and
+  `pnpm build` for the client and Worker.
+- `pnpm db:verify`: matching development bindings, SQL queries, HTTP batch
+  transactions, failure recovery, and expected interactive transaction rejection.
+- `pnpm auth:verify`: real Better Auth/Drizzle login, sessions, permissions,
+  administrator account creation, CSRF, expiration, logout, and database-backed
+  rate limits using temporary synthetic accounts.
+- `pnpm dev --port 5173 --strictPort`: local startup, health, login HTML, and
+  unauthorized session responses at `http://127.0.0.1:5173`; the server was stopped
+  after verification. This was an HTTP smoke check, not browser E2E testing.
+- A private scan of `dist/client` found none of the local URLs, database password,
+  or auth secret in browser output. The Worker build's local secret file remains
+  inside ignored `dist/`.
+- A final Drizzle query confirmed all nine application tables contain no records
+  after fixture cleanup. No permanent administrator was provisioned.
+- `pnpm audit --audit-level=high`: exit code 0, no high/critical findings; the
+  existing moderate Drizzle Kit development-tooling advisory described in
+  [authentication](authentication.md#external-configuration) remains.
+
+Only ignored local configuration and setup/verification documentation changed.
+Application code, schema definitions, committed migrations, authentication,
+Cloudflare configuration, and the Vercel adapter were preserved. No deployment
+was performed. Run `pnpm dev` to start locally; staff login requires a separately
+authorized initial account bootstrap as described in the authentication guide.
+
+The earlier record below describes the previous project and historical fixture
+tests; it is not the current local connection configuration.
+
+## Historical foundation verification — 2026-10-08
+
 Verified on 2026-10-08 with Node 24.19.0, pnpm 12.10.1, Wrangler 4.148.0,
 Neon serverless driver 1.2.0, Drizzle ORM 0.45.4, and Drizzle Kit 0.31.11.
 

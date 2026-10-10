@@ -51,31 +51,47 @@ until the pinned TypeScript ESLint tooling supports TypeScript 7.
 
 ## Neon and migrations
 
-Create or select a Neon project, database, and isolated development branch in
-[Neon Console](https://console.neon.tech). Use synthetic data until the
-[production security checklist](docs/security.md) is implemented. Obtain pooled
-and direct connection strings for the same branch/database from **Connect**.
-Use a runtime role with only necessary data permissions and a separate migration
-role with DDL permissions.
+Use the existing `prometheus-dental-clinic-development` Neon project
+(`muddy-boat-93080753`) in organization `org-solitary-paper-36906181`, branch
+`development` (`br-red-sun-b3nj2cwd`), and database `prometheus_dental_clinic`.
+It runs PostgreSQL 18 in `aws-ap-southeast-1`. Do not create another project or
+select production for local setup. Use synthetic data until the
+[production security checklist](docs/security.md) is implemented. Before
+production use, configure a runtime role with only necessary data permissions
+and a separate migration role with DDL permissions.
+
+With an authenticated Neon CLI, link and pull only the database variables:
+
+```sh
+neon link --org-id org-solitary-paper-36906181 --project-id muddy-boat-93080753 --branch-id br-red-sun-b3nj2cwd --no-env-pull --no-config -y
+neon env pull --project-id muddy-boat-93080753 --branch br-red-sun-b3nj2cwd --file .env.local --env DATABASE_URL --env DATABASE_URL_UNPOOLED --env NEON_BRANCH
+```
 
 Copy the examples only if the local files do not already exist:
 
 ```sh
 cp -n .dev.vars.example .dev.vars
-cp -n .env.example .env
 ```
 
-Replace the placeholder values locally:
+Copy the pulled pooled URL into `.dev.vars` and complete the
+[authentication secrets](docs/authentication.md). Keep secret files readable
+only by their owner (`chmod 600 .env.local .dev.vars`).
 
-| Variable                | File        | Purpose                                                                    |
-| ----------------------- | ----------- | -------------------------------------------------------------------------- |
-| `DATABASE_URL`          | `.dev.vars` | Pooled runtime connection (`-pooler` hostname), exposed only to the Worker |
-| `DATABASE_URL_UNPOOLED` | `.env`      | Direct connection for Node-only migration tooling                          |
+| Variable                | File         | Purpose                                                                    |
+| ----------------------- | ------------ | -------------------------------------------------------------------------- |
+| `DATABASE_URL`          | `.dev.vars`  | Pooled runtime connection (`-pooler` hostname), exposed only to the Worker |
+| `DATABASE_URL_UNPOOLED` | `.env.local` | Direct connection for Node-only migration tooling                          |
 
-Keep TLS enabled (`sslmode=require`). Neither file is committed. The `db:*`
+Keep TLS enabled (`sslmode=require`). Neither file is committed. `.env.example`
+documents the direct migration URL for optional manual `.env` setup; a pulled
+`.env.local` is sufficient, so leave `.env` absent unless needed. The `db:*`
 scripts use Node's built-in environment-file support; externally supplied
 process variables take precedence. The scripts also read Neon CLI's `.env.local`;
-values in `.env` override `.env.local`. No dotenv dependency is needed. Wrangler
+values in `.env` override `.env.local`. Before migrating or starting locally,
+remove stale database overrides from `.env` and the process environment, or
+ensure both URL values match `.env.local` exactly. Keep `.dev.vars` synchronized
+after every pull. Never print secret values while checking them. No dotenv
+dependency is needed. Wrangler
 loads `.dev.vars` for the Worker; the migration URL is not a Worker binding.
 Never use `VITE_*` for either connection string, since those values are public.
 
@@ -87,17 +103,17 @@ Keep database code in `worker/`; never import it into `src/` or `shared/`.
 `db.transaction()` callbacks are unsupported by this adapter; a feature needing
 them will require a deliberate connection strategy change.
 
-The Neon CLI context in ignored `.neon` currently links project
-`green-bar-82369299` (`prometheus-dental-clinic`) to the schema-only `development` branch.
-`neon.ts` declares an empty configuration: no additional services or branch
-settings. After CLI authentication, `neon deploy` applies that configuration and
-refreshes ignored `.env.local`; it does not deploy the Cloudflare application or
-run Drizzle migrations. When `.dev.vars` is absent, Wrangler can load the runtime
-`DATABASE_URL` from `.env.local` instead. Check the target branch before database
-writes: the pulled URLs currently point to `development`. Keep migration tests
+The Neon CLI context in ignored `.neon` selects the development project and
+branch above. `neon.ts` declares an empty configuration: no additional services
+or branch settings. Linking and pulling credentials do not provision services,
+deploy the application, or run Drizzle migrations. When `.dev.vars` is absent,
+Wrangler can load the runtime `DATABASE_URL` from `.env.local` instead. Check the
+project, branch, and database before database writes. Keep migration tests
 on disposable children of development and never verify against production.
 
-`worker/db/schema.ts` defines the Better Auth tables. For schema changes:
+`worker/db/schema.ts` defines the Better Auth tables and exports the patient,
+appointment, and dental-record tables. For an empty development database, apply
+the five committed migrations with `pnpm db:migrate`. For schema changes:
 
 ```sh
 pnpm db:generate

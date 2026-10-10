@@ -9,8 +9,9 @@ not support. No managed Neon Auth service or separate auth host is provisioned.
 
 ## Local setup
 
-Use the linked Neon `development` branch and its pulled `.env.local`. Configure
-ignored `.dev.vars` using `.dev.vars.example`:
+Use the existing Neon development project and branch identified in the
+[README](../README.md#neon-and-migrations), and its pulled `.env.local`.
+Configure ignored `.dev.vars` using `.dev.vars.example`:
 
 - `DATABASE_URL`: development's pooled URL.
 - `BETTER_AUTH_SECRET`: a random secret with at least 32 characters. Generate
@@ -19,10 +20,14 @@ ignored `.dev.vars` using `.dev.vars.example`:
   without a path or trailing slash. Adjust it if the development port changes.
 
 Run `pnpm db:migrate` after confirming that `DATABASE_URL_UNPOOLED` points to
-development and no `.env` or process variable overrides it. The migration creates
-only auth tables and indexes; the database constrains roles to `admin` and `staff`.
+development and no `.env` or process variable overrides it. The five committed
+migrations create auth, patient, appointment, and dental-record tables, indexes,
+constraints, and the clinical audit trigger. The database constrains roles to
+`admin` and `staff`.
 
-Create the first administrator from an authorized operator's terminal. Set
+Database connection setup and `pnpm auth:verify` do not create a permanent
+administrator. The verification harness removes its synthetic accounts. When
+separately authorized, create the first administrator from an operator's terminal. Set
 `AUTH_BOOTSTRAP_NAME`, `AUTH_BOOTSTRAP_EMAIL`, and `AUTH_BOOTSTRAP_PASSWORD` in
 the environment, then run `pnpm auth:bootstrap`. The password must be 12–128
 characters. Avoid placing the password in shell history; use a hidden shell

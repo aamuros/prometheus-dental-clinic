@@ -68,8 +68,10 @@ and deployment, against a development Neon branch before production.
 The Neon CLI uses ignored `.neon` for its project/branch context and pulls URLs
 into ignored `.env.local`. `neon.ts` declares the requested empty service policy;
 applying it does not deploy the Cloudflare Worker or run database migrations.
-The current linked branch is the schema-only `development` branch. Use disposable
-development children for migration verification. `.env` takes precedence over `.env.local`
+The current linked project is `prometheus-dental-clinic-development`
+(`muddy-boat-93080753`), branch `development` (`br-red-sun-b3nj2cwd`), database
+`prometheus_dental_clinic`. Use disposable development children for migration
+verification. `.env` takes precedence over `.env.local`
 in the migration scripts, while supplied process variables take precedence over both.
 
 `pnpm db:verify` runs a test-only Hono entry point in local workerd, checks its
