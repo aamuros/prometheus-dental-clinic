@@ -8,6 +8,7 @@ import { Route as homeRoute } from '../routes/index';
 import { Route as loginRoute } from '../routes/login';
 import { Route as protectedRoute } from '../routes/protected';
 import { Route as staffRoute } from '../routes/staff';
+import { Route as changePasswordRoute } from '../routes/change-password';
 import { Route as patientsRoute } from '../routes/patients';
 import { Route as patientNewRoute } from '../routes/patient-new';
 import { Route as patientDetailsRoute } from '../routes/patient-details';
@@ -22,6 +23,7 @@ const routeTree = rootRoute.addChildren([
   protectedRoute.addChildren([
     homeRoute,
     staffRoute,
+    changePasswordRoute,
     patientsRoute,
     patientNewRoute,
     patientDetailsRoute,

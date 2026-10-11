@@ -3,7 +3,10 @@
 This backend milestone adds administrator account management to the existing
 Better Auth 1.7.7, Hono, Drizzle and Neon HTTP integration. It adds no dependency
 and no deletion endpoint. Existing account creation and role/dentist rules remain
-unchanged. Management screens and a password-change screen are a later UI milestone.
+unchanged. The `/staff` administrator screen includes server-backed account
+pagination, status, lifecycle actions and assisted recovery alongside account
+creation and dentist designation. All authenticated accounts can use
+`/change-password`.
 
 ## API contracts
 
@@ -122,3 +125,91 @@ Verified on 2026-10-10 against isolated branch `br-fancy-art-b3d1difk`
 (`dev-staff-lifecycle-verification`, expires 2026-10-13): migration and all live
 checks passed, including concurrent deactivation leaving exactly one active
 administrator and concurrent password changes allowing exactly one write.
+
+## Frontend behavior
+
+Staff management uses the existing TanStack route guard and server-backed page
+search (`/staff?page=2`). Account actions require an inline, keyboard-accessible
+confirmation; Escape or Cancel dismisses it. Self-recovery is excluded: use
+Change password for your own account. Recovery requires confirmation that the
+employee’s identity was verified, the acting administrator’s password, and a
+confirmed temporary password. Share that password outside the application through
+the clinic’s trusted private process. Account status and password-change flags
+refresh after successful actions; account creation and dentist designation remain
+available on the same page.
+
+The protected parent route fetches `/api/session`, validates and preserves the
+optional boolean `passwordChangeRequired`, and redirects restricted accounts to
+`/change-password` before business loaders run. The restricted layout exposes
+only password change and logout. A malformed flag fails closed. Password
+replacement verifies the current password on the server, clears form inputs on
+success, and replaces the current route with `/login?passwordChanged=true`.
+The query contains only a success indicator, never credentials. All sessions are
+revoked by the backend, so the employee must log in again with the new password.
+
+Passwords stay in password inputs and the mutation request; they are not copied
+to application state, browser storage, URLs, logs or analytics. The UI validates
+confirmation, length (12–128 characters), and a different self-service password;
+server validation, permissions, session checks and persistent rate limits remain
+authoritative. Safe errors distinguish invalid current passwords, denied access,
+conflicts and rate limits (using a bounded numeric `Retry-After`). A 401 returns
+the user to login. Submit guards and disabled controls prevent duplicate requests.
+
+## UI integration readiness and operator prerequisites
+
+Read-only schema checks on 2026-10-11 in project `muddy-boat-93080753`, database
+`prometheus_dental_clinic`, found:
+
+| Branch                                                                                                  | Migration 0005 schema                                      |
+| ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Development (`br-red-sun-b3nj2cwd`)                                                                     | Missing flag, audit table, index and constraints           |
+| Existing preview database (`br-broad-math-b3cer5eo`, `preview-auth-verification`)                       | Missing flag, audit table, index and constraints           |
+| Isolated verification (`br-fancy-art-b3d1difk`, `dev-staff-lifecycle-verification`, expires 2026-10-13) | Flag, audit table, index and all three constraints present |
+
+No development, existing preview or production migration was applied for this UI
+work. The guarded harness passed again on the compatible isolated branch,
+including password recovery/change, revocation, concurrency, rollback and clinical
+references. This verifies the live backend contracts; UI interaction tests use
+Vitest/React Testing Library with a controlled transport. No deployed preview or
+browser smoke test was performed. The actual Vercel Preview environment’s branch
+selection still needs operator confirmation; the table identifies checked Neon
+branches, not an assertion about remote environment-variable values.
+
+Before authenticated local or deployed preview verification, an operator should:
+
+1. Confirm the runtime database belongs to the intended development/preview
+   branch, never production, and review `drizzle/0005_calm_fenris.sql`. It adds
+   `auth_user.password_change_required` (non-null boolean, default false),
+   `staff_audit`, two restrictive foreign keys, an action check and a target/date
+   index. It does not modify existing account credentials or clinical rows.
+2. Supply that branch’s **direct** connection as `DATABASE_URL_UNPOOLED` in a
+   private operator process environment, confirm no conflicting `.env` values,
+   and run the existing migration command below. Drizzle records pending
+   migrations; do not manually rerun individual SQL files.
+3. Recheck schema compatibility. Keep the pooled `DATABASE_URL` and a separate
+   `BETTER_AUTH_SECRET` scoped to development/Preview. Retain the existing exact
+   origin handling and deployment protection from [deployment](deployment.md).
+   Do not change Production variables or expose secrets through `VITE_*`.
+4. Only then verify login, `/staff` pagination/actions, restricted recovery login,
+   password replacement, fresh login and logout using synthetic accounts. Follow
+   [verification](verification.md) for a deployed preview. Define identity
+   verification, private password delivery and audit access/retention procedures
+   before clinic use.
+
+Operator-reviewed migration (credentials supplied privately, not in arguments):
+
+```sh
+pnpm db:migrate
+```
+
+For the existing disposable verification branch only, privately provide
+`STAFF_VERIFY_BRANCH_ID` and `STAFF_VERIFY_DATABASE_URL`, then run:
+
+```sh
+node --import tsx scripts/verify-staff-lifecycle.ts
+```
+
+The harness independently checks Neon branch metadata and host identity before
+SQL, applies any pending migrations only to that disposable clone, and removes
+synthetic data afterward. Do not substitute the shared development, preview or
+production branch. Recheck branch existence/expiry before reuse.

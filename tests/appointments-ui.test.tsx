@@ -69,6 +69,8 @@ beforeEach(() => {
         return Response.json({
           dentists: [{ id: 'dentist-id', name: appointment.dentistName }],
         });
+      if (path.startsWith('/api/staff?'))
+        return Response.json({ accounts: [], page: 1, hasMore: false });
       if (path === '/api/appointments/staff')
         return Response.json({
           staff: [{ id: 'staff', name: 'Existing staff', isDentist: false }],

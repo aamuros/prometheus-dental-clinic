@@ -1,9 +1,11 @@
 import { useState, type SubmitEvent } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import { authClient } from './client';
+import { Route as loginRoute } from '../../routes/login';
 
 export function LoginForm() {
   const router = useRouter();
+  const { passwordChanged } = loginRoute.useSearch();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -41,6 +43,11 @@ export function LoginForm() {
         Staff login
       </h1>
       <form onSubmit={submit} className="space-y-4">
+        {passwordChanged && (
+          <p role="status" className="text-sm">
+            Password changed. Sign in with your new password.
+          </p>
+        )}
         <label className="block space-y-1">
           Email
           <input

@@ -101,16 +101,18 @@ describe('React application', () => {
       vi.fn((path: string) =>
         Promise.resolve(
           Response.json(
-            path === '/api/appointments/staff'
-              ? { staff: [] }
-              : {
-                  user: {
-                    id: 'admin-id',
-                    name: 'Admin',
-                    email: 'admin@example.test',
-                    role: 'admin',
+            path.startsWith('/api/staff?')
+              ? { accounts: [], page: 1, hasMore: false }
+              : path === '/api/appointments/staff'
+                ? { staff: [] }
+                : {
+                    user: {
+                      id: 'admin-id',
+                      name: 'Admin',
+                      email: 'admin@example.test',
+                      role: 'admin',
+                    },
                   },
-                },
           ),
         ),
       ),

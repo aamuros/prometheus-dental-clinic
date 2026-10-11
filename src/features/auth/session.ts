@@ -24,11 +24,21 @@ export async function loadStaffSession(): Promise<StaffSession> {
     !('email' in user) ||
     typeof user.email !== 'string' ||
     !('role' in user) ||
-    (user.role !== 'admin' && user.role !== 'staff')
+    (user.role !== 'admin' && user.role !== 'staff') ||
+    ('passwordChangeRequired' in user &&
+      typeof user.passwordChangeRequired !== 'boolean')
   ) {
     throw new Error('Invalid session');
   }
   return {
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      passwordChangeRequired:
+        'passwordChangeRequired' in user &&
+        user.passwordChangeRequired === true,
+    },
   };
 }

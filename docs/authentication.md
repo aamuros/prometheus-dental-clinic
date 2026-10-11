@@ -23,7 +23,10 @@ creates its own temporary accounts without bootstrap.
 
 `/login` is public. A pathless TanStack route guards the home and `/staff` routes
 by fetching `/api/session`; unauthenticated users go to login and staff cannot
-open `/staff`. The existing home UI is retained. Logout waits for server session
+open `/staff`. All authenticated users can open `/change-password`. Accounts
+marked `passwordChangeRequired` are sent there before business loaders execute;
+their navigation exposes only password change and logout. Successful password
+replacement revokes all sessions and returns the user to login. The existing home UI is retained. Logout waits for server session
 revocation before returning to login.
 
 Hono checks the database session on every application API request. Register

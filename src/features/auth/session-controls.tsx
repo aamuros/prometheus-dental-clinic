@@ -30,25 +30,32 @@ export function SessionControls({ session }: { session: StaffSession }) {
         className="flex flex-wrap items-center gap-4"
       >
         <span>{session.user.name}</span>
-        <Link
-          to="/patients"
-          search={{ q: '', page: 1, status: 'active' }}
-          className="underline"
-        >
-          Patients
-        </Link>
-        <Link
-          to="/appointments"
-          search={{ date: clinicDate(), view: 'list', page: 1 }}
-          className="underline"
-        >
-          Appointments
-        </Link>
-        {session.user.role === 'admin' && (
-          <Link to="/staff" className="underline">
-            Create staff account
-          </Link>
+        {!session.user.passwordChangeRequired && (
+          <>
+            <Link
+              to="/patients"
+              search={{ q: '', page: 1, status: 'active' }}
+              className="underline"
+            >
+              Patients
+            </Link>
+            <Link
+              to="/appointments"
+              search={{ date: clinicDate(), view: 'list', page: 1 }}
+              className="underline"
+            >
+              Appointments
+            </Link>
+            {session.user.role === 'admin' && (
+              <Link to="/staff" search={{ page: 1 }} className="underline">
+                Manage staff
+              </Link>
+            )}
+          </>
         )}
+        <Link to="/change-password" className="underline">
+          Change password
+        </Link>
         <button
           type="button"
           onClick={logout}
