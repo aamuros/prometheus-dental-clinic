@@ -60,6 +60,12 @@ export function StaffAccounts({
       setError('Verify the employee’s identity before recovery.');
       return;
     }
+    if (recovery && form.get('credentialsPrepared') !== 'on') {
+      setError(
+        'Prepare or securely communicate the temporary password before confirming recovery.',
+      );
+      return;
+    }
     submitting.current = true;
     setBusy(true);
     setError('');
@@ -78,7 +84,7 @@ export function StaffAccounts({
         return;
       }
       setMessage(
-        `${labels[action]} completed for ${account.name}.${recovery ? ' Share the temporary password through a trusted private channel. The employee must replace it after login.' : ''}`,
+        `${labels[action]} completed for ${account.name}.${recovery ? ' The employee must sign in with the prepared temporary password and replace it after login.' : ''}`,
       );
       setRefreshing(true);
       // Refresh is separate from mutation feedback: the committed action must not be reported as failed.
@@ -192,6 +198,20 @@ export function StaffAccounts({
                 <form
                   aria-label={`${labels[selection.action]}: ${account.name}`}
                   onSubmit={submit}
+                  onInput={(event) => {
+                    const input = event.target;
+                    if (
+                      input instanceof HTMLInputElement &&
+                      (input.name === 'newPassword' ||
+                        input.name === 'confirmation')
+                    ) {
+                      const prepared = event.currentTarget.elements.namedItem(
+                        'credentialsPrepared',
+                      );
+                      if (prepared instanceof HTMLInputElement)
+                        prepared.checked = false;
+                    }
+                  }}
                   className="mt-4 max-w-sm space-y-4 border-t border-border pt-4"
                   onKeyDown={(event) => {
                     if (event.key === 'Escape' && !busy) {
@@ -216,6 +236,13 @@ export function StaffAccounts({
                     <legend className="sr-only">Confirm account action</legend>
                     {selection.action === 'recover-password' && (
                       <>
+                        <p className="text-sm text-muted-foreground">
+                          Before confirming, prepare the temporary password in a
+                          clinic-approved private channel or securely
+                          communicate it to the verified employee. The password
+                          is cleared after recovery and cannot be retrieved
+                          here.
+                        </p>
                         <PasswordFields recovery />
                         <label className="flex items-center gap-2 text-sm">
                           <input
@@ -224,6 +251,16 @@ export function StaffAccounts({
                             required
                           />
                           I verified the employee’s identity.
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            name="credentialsPrepared"
+                            required
+                          />
+                          I have prepared or securely communicated this
+                          temporary password through a clinic-approved private
+                          channel.
                         </label>
                       </>
                     )}

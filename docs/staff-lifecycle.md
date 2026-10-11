@@ -133,9 +133,12 @@ search (`/staff?page=2`). Account actions require an inline, keyboard-accessible
 confirmation; Escape or Cancel dismisses it. Self-recovery is excluded: use
 Change password for your own account. Recovery requires confirmation that the
 employee’s identity was verified, the acting administrator’s password, and a
-confirmed temporary password. Share that password outside the application through
-the clinic’s trusted private process. Account status and password-change flags
-refresh after successful actions; account creation and dentist designation remain
+confirmed temporary password. Before confirming recovery, administrators must
+prepare that password in a clinic-approved private channel or securely communicate
+it to the verified employee, then acknowledge preparation. Editing either
+temporary-password input clears that acknowledgement. Success clears the inputs;
+the password cannot be retrieved from the application afterward. Account status
+and password-change flags refresh after successful actions; account creation and dentist designation remain
 available on the same page.
 
 The protected parent route fetches `/api/session`, validates and preserves the
@@ -169,9 +172,10 @@ Read-only schema checks on 2026-10-11 in project `muddy-boat-93080753`, database
 No development, existing preview or production migration was applied for this UI
 work. The guarded harness passed again on the compatible isolated branch,
 including password recovery/change, revocation, concurrency, rollback and clinical
-references. This verifies the live backend contracts; UI interaction tests use
-Vitest/React Testing Library with a controlled transport. No deployed preview or
-browser smoke test was performed. The actual Vercel Preview environment’s branch
+references. That initial verification covered live backend contracts and
+Vitest/React Testing Library UI tests with a controlled transport. The recovery
+review adds real local browser verification described below; a deployed Vercel
+preview smoke test remains unperformed. The actual Vercel Preview environment’s branch
 selection still needs operator confirmation; the table identifies checked Neon
 branches, not an assertion about remote environment-variable values.
 
@@ -213,3 +217,41 @@ The harness independently checks Neon branch metadata and host identity before
 SQL, applies any pending migrations only to that disposable clone, and removes
 synthetic data afterward. Do not substitute the shared development, preview or
 production branch. Recheck branch existence/expiry before reuse.
+
+### Recovery review: live frontend verification
+
+On 2026-10-11, the built frontend was verified in real Chromium administrator
+and employee contexts against the existing local Node preview server at
+`http://127.0.0.1:4180` and isolated Neon branch `br-fancy-art-b3d1difk`.
+Before SQL or fixture setup, branch metadata was checked for the development
+parent, non-default/unprotected status and future expiry, and the connection was
+obtained for that exact branch. Read-only checks confirmed the migration 0005
+flag (including its non-null/default-false definition), audit table, index and
+all three constraints. No migration was needed or applied.
+
+The browser exercised real Hono/Better Auth/Neon requests for administrator and
+employee login, administrator-only management, account creation, dentist
+assignment, pagination, deactivation/reactivation, session revocation, recovery
+with required credential preparation, acknowledgement reset on password edits,
+mandatory password-change navigation, password replacement, fresh login and
+logout. Database checks confirmed session deletion and the recovery flag's
+transition. Restricted visits to patients, staff and appointments made no
+business API requests. The local login rate limit remained enabled; the frontend
+showed 429 feedback and the driver honored the server's `Retry-After` before
+retrying.
+
+Synthetic credentials were generated only in verification-process memory and
+filled directly into password inputs. No traces, screenshots, saved browser
+state, request-body artifacts or credential files were created. Checks found no
+credentials in browser/server logs, URLs, storage or the completed UI. Synthetic
+accounts, their sessions, credentials and lifecycle audits were removed afterward,
+and browser contexts and the local server were closed. No inherited account,
+shared development/preview database or production setting/data was modified.
+
+`pnpm check` passed all checks, including 290 tests (four new preparation
+regressions), and `pnpm audit --audit-level=high` passed with the existing moderate
+transitive esbuild advisory. This is local built-frontend verification, not a
+claim about the deployed Vercel Preview's environment configuration. Confirm its
+actual database identity and migration readiness before deployed verification;
+the earlier development/preview schema table is dated evidence, not a fresh
+check of those shared environments.

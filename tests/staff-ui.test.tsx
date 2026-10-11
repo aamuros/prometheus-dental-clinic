@@ -225,8 +225,15 @@ describe('staff account management', () => {
     const form = screen.getByRole('form', {
       name: 'Recover password: Employee',
     });
-    expect(within(form).getByRole('checkbox')).toBeRequired();
-    fireEvent.click(within(form).getByRole('checkbox'));
+    expect(
+      within(form).getByRole('checkbox', { name: /verified/ }),
+    ).toBeRequired();
+    fireEvent.click(within(form).getByRole('checkbox', { name: /verified/ }));
+    fireEvent.click(
+      within(form).getByRole('checkbox', {
+        name: /prepared or securely communicated/i,
+      }),
+    );
     fireEvent.submit(form);
     await waitFor(() =>
       expect(
@@ -620,4 +627,119 @@ it('keeps recovery restrictions when navigating through the application header',
   expect(
     vi.mocked(fetch).mock.calls.every(([path]) => path === '/api/session'),
   ).toBe(true);
+});
+
+describe('temporary credential preparation', () => {
+  it('requires preparation before recovery, then clears credentials without revealing them', async () => {
+    renderPage();
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Recover password for Employee',
+      }),
+    );
+    fillPasswords(true);
+    fireEvent.click(screen.getByRole('checkbox', { name: /verified/ }));
+    const form = screen.getByRole('form', {
+      name: 'Recover password: Employee',
+    });
+    expect(within(form).getByText(/before.*confirming/i)).toBeVisible();
+    fireEvent.submit(form);
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /prepare.*securely communicate/i,
+    );
+    expect(requests).toHaveLength(0);
+    const current = screen.getByLabelText('Your administrator password');
+    const temporary = screen.getByLabelText('Temporary password');
+    const confirmation = screen.getByLabelText('Confirm temporary password');
+    expect(temporary).toHaveValue('replacement-password');
+    const prepared = screen.getByRole('checkbox', {
+      name: /prepared or securely communicated/i,
+    });
+    expect(prepared).toBeRequired();
+    fireEvent.click(prepared);
+    fireEvent.submit(form);
+    await screen.findByText('Password change required');
+    expect(current).toHaveValue('');
+    expect(temporary).toHaveValue('');
+    expect(confirmation).toHaveValue('');
+    expect(screen.getByRole('status')).not.toHaveTextContent(
+      'replacement-password',
+    );
+    expect(screen.getByRole('status')).not.toHaveTextContent(
+      'current-password',
+    );
+    expect(window.location.href).not.toContain('replacement-password');
+    expect(localStorage.length).toBe(0);
+    expect(sessionStorage.length).toBe(0);
+  });
+  it.each(['Temporary password', 'Confirm temporary password'])(
+    'requires a new preparation confirmation after editing %s',
+    async (label) => {
+      renderPage();
+      fireEvent.click(
+        await screen.findByRole('button', {
+          name: 'Recover password for Employee',
+        }),
+      );
+      fillPasswords(true);
+      fireEvent.click(screen.getByRole('checkbox', { name: /verified/ }));
+      const prepared = screen.getByRole('checkbox', {
+        name: /prepared or securely communicated/i,
+      });
+      fireEvent.click(prepared);
+      fireEvent.input(screen.getByLabelText(label), {
+        target: { value: 'updated-temporary-password' },
+      });
+      expect(prepared).not.toBeChecked();
+      fireEvent.input(
+        screen.getByLabelText(
+          label === 'Temporary password'
+            ? 'Confirm temporary password'
+            : 'Temporary password',
+        ),
+        { target: { value: 'updated-temporary-password' } },
+      );
+      fireEvent.submit(
+        screen.getByRole('form', { name: 'Recover password: Employee' }),
+      );
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        /prepare.*securely communicate/i,
+      );
+      expect(requests).toHaveLength(0);
+      fireEvent.click(prepared);
+      fireEvent.submit(
+        screen.getByRole('form', { name: 'Recover password: Employee' }),
+      );
+      await screen.findByText('Password change required');
+      expect(requests[0]?.body).toEqual({
+        currentPassword: 'current-password',
+        newPassword: 'updated-temporary-password',
+      });
+    },
+  );
+  it('discards preparation and password inputs when recovery is cancelled', async () => {
+    renderPage();
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Recover password for Employee',
+      }),
+    );
+    fillPasswords(true);
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: /prepared or securely communicated/i,
+      }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Recover password for Employee' }),
+    );
+    expect(screen.getByLabelText('Temporary password')).toHaveValue('');
+    expect(
+      screen.getByRole('checkbox', {
+        name: /prepared or securely communicated/i,
+      }),
+    ).not.toBeChecked();
+    expect(requests).toHaveLength(0);
+  });
 });
